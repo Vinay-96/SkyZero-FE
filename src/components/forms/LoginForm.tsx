@@ -29,24 +29,32 @@ export default function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-w-md mx-auto">
       <div>
-        <label className="block text-sm font-medium text-gray-700">Email</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+          Email
+        </label>
         <input
           type="email"
           required
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 
+                   shadow-sm focus:border-primary-light dark:focus:border-primary-dark 
+                   focus:ring-primary-light dark:focus:ring-primary-dark
+                   dark:bg-gray-700 dark:text-white transition-colors"
           value={formData.email}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
           Password
         </label>
         <input
           type="password"
           required
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 
+                   shadow-sm focus:border-primary-light dark:focus:border-primary-dark 
+                   focus:ring-primary-light dark:focus:ring-primary-dark
+                   dark:bg-gray-700 dark:text-white transition-colors"
           value={formData.password}
           onChange={(e) =>
             setFormData({ ...formData, password: e.target.value })
@@ -54,14 +62,23 @@ export default function LoginForm() {
         />
       </div>
 
-      {error && <p className="text-red-500 text-sm">{error}</p>}
+      {error && (
+        <p className="text-red-500 dark:text-red-400 text-sm">{error}</p>
+      )}
 
       <button
         type="submit"
-        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        className="w-full flex justify-center py-2 px-4 border border-transparent 
+                 rounded-md shadow-sm text-sm font-medium text-white 
+                 bg-primary-light dark:bg-primary-dark 
+                 hover:bg-indigo-700 dark:hover:bg-indigo-400 
+                 focus:outline-none focus:ring-2 focus:ring-offset-2 
+                 focus:ring-primary-light dark:focus:ring-primary-dark
+                 transition-colors"
       >
         Login
       </button>
     </form>
   );
 }
+

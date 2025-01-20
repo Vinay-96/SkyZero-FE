@@ -5,9 +5,13 @@ import api from "@/lib/api/config";
 export default function RegisterForm() {
   const router = useRouter();
   const [formData, setFormData] = useState({
+    name: "",
+    userName: "",
+    gender: "",
+    phoneNumber: "",
     email: "",
     password: "",
-    name: "",
+    profilePicture: "",
   });
   const [error, setError] = useState("");
 
@@ -31,6 +35,64 @@ export default function RegisterForm() {
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          UserName
+        </label>
+        <input
+          type="text"
+          required
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          value={formData.userName}
+          onChange={(e) =>
+            setFormData({ ...formData, userName: e.target.value })
+          }
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          gender
+        </label>
+        <input
+          type="radio"
+          required
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          value={formData.gender}
+          onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          phoneNumber
+        </label>
+        <input
+          type="tel"
+          required
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          value={formData.phoneNumber}
+          onChange={(e) =>
+            setFormData({ ...formData, phoneNumber: e.target.value })
+          }
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          Profile Picture
+        </label>
+        <input
+          type="file"
+          required
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          value={formData.profilePicture}
+          onChange={(e) =>
+            setFormData({ ...formData, profilePicture: e.target.value })
+          }
         />
       </div>
 
@@ -71,3 +133,4 @@ export default function RegisterForm() {
     </form>
   );
 }
+
