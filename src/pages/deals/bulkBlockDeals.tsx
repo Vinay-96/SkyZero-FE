@@ -1,4 +1,4 @@
-import LoginForm from "@/components/forms/LoginForm";
+import BulkBlockTrade from "@/components/reports/BulkBlockTrades";
 
 export default function LoginPage() {
   return (
@@ -9,7 +9,7 @@ export default function LoginPage() {
             Sign in to your account
           </h2>
         </div>
-        <LoginForm />
+        <BulkBlockTrade />
       </div>
     </div>
   );
