@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
-import api from "@/lib/api/config";
 import { useAuthStore } from "@/lib/zustand/store";
 import { socketService } from "@/lib/socket";
-import { API_ENDPOINTS } from "@/lib/api/endpoints";
+import { apiService } from "@/lib/api/services/api.service";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -17,7 +16,7 @@ export default function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await api.post(API_ENDPOINTS.AUTH.LOGIN, formData);
+      const response = await apiService.auth.login(formData);
       const { user, token } = response.data;
       setAuth(user, token);
       socketService.connect(token);

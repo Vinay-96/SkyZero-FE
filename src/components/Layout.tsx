@@ -7,8 +7,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Home,
-  BarChart2,
-  Users,
   FileText,
   Settings,
   LogOut,
@@ -24,7 +22,7 @@ import {
 
 const menuItems = [
   { name: "Home", icon: Home, path: "/dashboard" },
-  { name: "Heat Map", icon: ChartScatter, path: "/dashboard" },
+  { name: "Heat Map", icon: ChartScatter, path: "/heat-map" },
   { name: "Option chain", icon: Link, path: "/dashboard" },
   { name: "Option Analytics", icon: ChartNoAxesCombined, path: "/dashboard" },
   { name: "Technicals", icon: ChartCandlestick, path: "/analytics" },

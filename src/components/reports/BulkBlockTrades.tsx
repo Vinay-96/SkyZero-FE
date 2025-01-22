@@ -1,18 +1,32 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ChevronDown,
   ChevronUp,
   ArrowUpRight,
   ArrowDownRight,
+  Loader2,
 } from "lucide-react";
+import { apiService } from "@/lib/api/services/api.service";
 
-const BulkBlockTradeCard = ({ data }) => {
+// API function for fetching trades
+const fetchTrades = async (timeFrame: string, params: string) => {
+  try {
+    const response = apiService.bulkDeals.getAll(timeFrame, params);
+    if (!response) {
+      throw new Error("Failed to fetch trades");
+    }
+    return response;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+const TradeCard = ({ data }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const hasBuyTrades = data.Trades.BUY.length > 0;
   const hasSellTrades = data.Trades.SELL.length > 0;
 
-  // Calculate average prices
   const avgBuyPrice = hasBuyTrades
     ? data.Trades.BUY.reduce((acc, trade) => acc + trade.BD_TP_WATP, 0) /
       data.Trades.BUY.length
@@ -24,7 +38,6 @@ const BulkBlockTradeCard = ({ data }) => {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
-      {/* Header */}
       <div
         className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
         onClick={() => setIsExpanded(!isExpanded)}
@@ -39,7 +52,6 @@ const BulkBlockTradeCard = ({ data }) => {
             </p>
           </div>
           <div className="flex items-center space-x-4">
-            {/* Trade Summary */}
             <div className="hidden sm:flex items-center space-x-4">
               <div className="text-center">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -58,7 +70,6 @@ const BulkBlockTradeCard = ({ data }) => {
                 </p>
               </div>
             </div>
-            {/* Expand/Collapse Icon */}
             {isExpanded ? (
               <ChevronUp className="w-5 h-5 text-gray-400" />
             ) : (
@@ -68,10 +79,8 @@ const BulkBlockTradeCard = ({ data }) => {
         </div>
       </div>
 
-      {/* Expanded Content */}
       {isExpanded && (
         <div className="border-t border-gray-200 dark:border-gray-700">
-          {/* Average Prices */}
           <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-750">
             {hasBuyTrades && (
               <div className="flex items-center space-x-2">
@@ -101,9 +110,7 @@ const BulkBlockTradeCard = ({ data }) => {
             )}
           </div>
 
-          {/* Trade Details */}
           <div className="p-4">
-            {/* Buy Trades */}
             {hasBuyTrades && (
               <div className="mb-6">
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
@@ -134,7 +141,6 @@ const BulkBlockTradeCard = ({ data }) => {
               </div>
             )}
 
-            {/* Sell Trades */}
             {hasSellTrades && (
               <div>
                 <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
@@ -171,15 +177,61 @@ const BulkBlockTradeCard = ({ data }) => {
   );
 };
 
-const TradeDashboard = ({ trades }) => {
+const LoadingState = () => (
+  <div className="flex items-center justify-center min-h-[200px]">
+    <div className="flex flex-col items-center space-y-4">
+      <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      <p className="text-gray-500 dark:text-gray-400">Loading trades...</p>
+    </div>
+  </div>
+);
+
+const ErrorState = ({ error, onRetry }) => (
+  <div className="flex flex-col items-center justify-center min-h-[200px] space-y-4">
+    <p className="text-red-500 dark:text-red-400">{error}</p>
+    <button
+      onClick={onRetry}
+      className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+    >
+      Try Again
+    </button>
+  </div>
+);
+
+const BulkBlockTrades = () => {
+  const [trades, setTrades] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const loadTrades = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await fetchTrades("today", "bulk_data");
+      setTrades(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTrades();
+  }, []);
+
+  if (loading) return <LoadingState />;
+  if (error) return <ErrorState error={error} onRetry={loadTrades} />;
+  if (!trades) return null;
+
   return (
     <div className="space-y-4 max-w-4xl mx-auto p-4">
       {trades.data.map((tradeData) => (
-        <BulkBlockTradeCard key={tradeData.Symbol} data={tradeData} />
+        <TradeCard key={tradeData.Symbol} data={tradeData} />
       ))}
     </div>
   );
 };
 
-export default TradeDashboard;
+export default BulkBlockTrades;
 

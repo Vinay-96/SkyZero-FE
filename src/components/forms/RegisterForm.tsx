@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { Eye, EyeOff, Upload, Loader2 } from "lucide-react";
-import api from "@/lib/api/config";
+import { apiService } from "@/lib/api/services/api.service";
 
 interface FormData {
   name: string;
@@ -99,13 +99,11 @@ export default function RegisterForm() {
       formDataToSend.append("password", formData.password);
 
       // Append file only if it exists
-      // if (formData.profilePicture) {
-      //   formDataToSend.append("profilePicture", formData.profilePicture);
-      // }
+      if (formData.profilePicture) {
+        formDataToSend.append("profilePicture", formData.profilePicture);
+      }
 
-      await api.post("/auth/register", formDataToSend, {
-        // headers: { "Content-Type": "multipart/form-data" },
-      });
+      await apiService.auth.register(formDataToSend);
       router.push("/login");
     } catch (err: any) {
       setErrors({
