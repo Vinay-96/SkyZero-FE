@@ -21,23 +21,23 @@ export const API_ENDPOINTS = {
   },
   // BLOCK-DEALS endpoints
   BLOCKDEALS: {
-    LIST: `${API_VERSION}/blocktrades/group-share-by-transaction-type/block_data`,
-    DETAILS: `${API_VERSION}/blocktrades/block-trade-insights/block_data`,
+    LIST: `${API_VERSION}/blocktrades/group-share-by-transaction-type`,
+    DETAILS: `${API_VERSION}/blocktrades/block-trade-insights`,
   },
   // INSIDER-TRADES endpoints
   INSIDERTRADES: {
-    LIST: `${API_VERSION}/insidertrading/group-by-acq-mode/insider_data`,
-    DETECT_MOMENTS: `${API_VERSION}/insidertrading/detect-significant-movements/insider_data`,
-    ANALYTICS: `${API_VERSION}/insidertrading/trading-insights/insider_data`,
-    RECENT_ACTIVITY: `${API_VERSION}/insidertrading/analyze-transaction/insider_data`,
+    LIST: `${API_VERSION}/insidertrading/group-by-acq-mode`,
+    DETECT_MOVEMENTS: `${API_VERSION}/insidertrading/detect-significant-movements`,
+    ANALYTICS: `${API_VERSION}/insidertrading/trading-insights`,
+    RECENT_ACTIVITY: `${API_VERSION}/insidertrading/analyze-transaction`,
   },
   // SAST-TRADES endpoints
   SASTTRADES: {
-    LIST: `${API_VERSION}/sasttrading/group-by-company-and-acquisition-mode/SAST_data`,
-    TOP_TRANSACTIONS: `${API_VERSION}/sasttrading/top-transactions/SAST_data`,
-    ANALYTICS: `${API_VERSION}/sasttrading/recommended-moves/SAST_data`,
-    RECENT_ACTIVITY: `${API_VERSION}/sasttrading/analyze-transaction/SAST_data`,
-    RECOMMENDATION: `${API_VERSION}/sasttrading/high-probability-trades/recommended/SAST_data`,
+    LIST: `${API_VERSION}/sasttrading/group-by-company-and-acquisition-mode`,
+    RECENT_ACTIVITY: `${API_VERSION}/sasttrading/analyze-transaction`,
+    ANALYTICS: `${API_VERSION}/sasttrading/recommended-moves`,
+    RECOMMENDATION: `${API_VERSION}/sasttrading/high-probability-trades/recommended`,
+    TOP_TRANSACTIONS: `${API_VERSION}/sasttrading/top-transactions`,
   },
   // BHAVCOPY endpoints
   BHAVCOPY: {

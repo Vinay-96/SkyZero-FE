@@ -51,12 +51,88 @@ export const apiService = {
 
   // Block trades
   blockDeals: {
-    getAll: async () => {
-      const response = await api.get(API_ENDPOINTS.BLOCKDEALS.LIST);
+    getAll: async (timeFrame: string, params: string) => {
+      const response = await api.get(
+        `${API_ENDPOINTS.BLOCKDEALS.LIST}/${params}?timeframe=${timeFrame}`
+      );
       return response.data;
     },
-    getDetails: async () => {
-      const response = await api.get(API_ENDPOINTS.BLOCKDEALS.DETAILS);
+    getDetails: async (timeFrame: string, params: string) => {
+      const response = await api.get(
+        `${API_ENDPOINTS.BLOCKDEALS.DETAILS}/${params}?timeframe=${timeFrame}`
+      );
+      return response.data;
+    },
+  },
+
+  // Insider trades
+  insiderDeals: {
+    getAll: async (timeFrame: string, params: string) => {
+      const response = await api.get(
+        `${API_ENDPOINTS.INSIDERTRADES.LIST}/${params}?timeframe=${timeFrame}`
+      );
+      return response.data;
+    },
+    getRecentActivity: async (timeFrame: string, params: string) => {
+      const response = await api.get(
+        `${API_ENDPOINTS.INSIDERTRADES.RECENT_ACTIVITY}/${params}?timeframe=${timeFrame}`
+      );
+      return response.data;
+    },
+    getMovements: async (timeFrame: string, params: string) => {
+      const response = await api.get(
+        `${API_ENDPOINTS.INSIDERTRADES.DETECT_MOVEMENTS}/${params}?timeframe=${timeFrame}`
+      );
+      console.log(response);
+      return response.data;
+    },
+    getAnalytics: async (timeFrame: string, params: string) => {
+      const response = await api.get(
+        `${API_ENDPOINTS.INSIDERTRADES.ANALYTICS}/${params}?timeframe=${timeFrame}`
+      );
+      return response.data;
+    },
+  },
+
+  // SAST trades
+  sastDeals: {
+    getAll: async (timeFrame: string, params: string) => {
+      const response = await api.get(
+        `${API_ENDPOINTS.SASTTRADES.LIST}/${params}?timeframe=${timeFrame}`
+      );
+      return response.data;
+    },
+    getRecentActivity: async (timeFrame: string, params: string) => {
+      const response = await api.get(
+        `${API_ENDPOINTS.SASTTRADES.RECENT_ACTIVITY}/${params}?timeframe=${timeFrame}`
+      );
+      return response.data;
+    },
+    getRecommendation: async (timeFrame: string, params: string) => {
+      const response = await api.get(
+        `${API_ENDPOINTS.SASTTRADES.ANALYTICS}/${params}?timeframe=${timeFrame}`
+      );
+      return response.data;
+    },
+    getAnalytics: async (timeFrame: string, params: string) => {
+      const response = await api.get(
+        `${API_ENDPOINTS.SASTTRADES.RECOMMENDATION}/${params}?timeframe=${timeFrame}`
+      );
+      console.log(response);
+      return response.data;
+    },
+    getTopTransactions: async (timeFrame: string, params: string) => {
+      const response = await api.get(
+        `${API_ENDPOINTS.SASTTRADES.TOP_TRANSACTIONS}/${params}?timeframe=${timeFrame}`
+      );
+      return response.data;
+    },
+  },
+
+  // Health trades
+  health: {
+    getApplicationHealth: async () => {
+      const response = await api.get(`${API_ENDPOINTS.HEALTH.HEALTH}`);
       return response.data;
     },
   },

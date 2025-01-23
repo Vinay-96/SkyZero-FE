@@ -1,8 +1,8 @@
-import React, { ReactNode, useState, useRef, useEffect } from "react";
-import { useRouter } from "next/router";
+// components/Layout.tsx
+import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/zustand/store";
-import { ThemeToggle } from "./ThemeToggle";
 import { socketService } from "@/lib/socket";
+import { useRouter } from "next/router";
 import {
   ChevronLeft,
   ChevronRight,
@@ -11,14 +11,31 @@ import {
   Settings,
   LogOut,
   User,
-  ChevronDown,
   Link,
   ChartCandlestick,
   ChartPie,
   ChartNoAxesCombined,
   NotebookPen,
   ChartScatter,
+  ChevronDown,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "components/ui/dropdown-menu";
+import { Button } from "components/ui/button";
+import { Skeleton } from "components/ui/skeleton";
+import { useEffect, useState, useRef, Suspense } from "react";
+import { ThemeToggle } from "./ThemeToggle";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 const menuItems = [
   { name: "Home", icon: Home, path: "/dashboard" },
@@ -26,17 +43,17 @@ const menuItems = [
   { name: "Option chain", icon: Link, path: "/dashboard" },
   { name: "Option Analytics", icon: ChartNoAxesCombined, path: "/dashboard" },
   { name: "Technicals", icon: ChartCandlestick, path: "/analytics" },
-  { name: "Trades", icon: ChartPie, path: "/users" },
+  { name: "Trades", icon: ChartPie, path: "/trades" },
   { name: "Reports", icon: FileText, path: "/reports" },
-  { name: "Journels", icon: NotebookPen, path: "/reports" },
+  { name: "Journals", icon: NotebookPen, path: "/reports" },
 ];
 
-export default function Layout({ children }: { children: ReactNode }) {
+export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, clearAuth } = useAuthStore();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const userMenuRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     socketService.disconnect();
@@ -46,158 +63,199 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   const isActivePath = (path: string) => router.pathname === path;
 
-  // Close dropdown when clicking outside
+  // Responsive sidebar handling
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        userMenuRef.current &&
-        !userMenuRef.current.contains(event.target as Node)
-      ) {
-        setIsUserMenuOpen(false);
-      }
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) setIsMobileMenuOpen(false);
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   return (
-    <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900 transition-colors">
-      {/* Sidenav */}
-      <div
-        className={`fixed h-full bg-white dark:bg-gray-800 shadow-lg transition-all duration-300 ease-in-out ${
-          isCollapsed ? "w-16" : "w-64"
-        }`}
+    <div className="min-h-screen flex bg-background">
+      {/* Mobile Menu Button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="md:hidden fixed top-4 left-4 z-50"
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
       >
-        {/* Logo Section */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 dark:border-gray-700">
-          {!isCollapsed && (
-            <span className="text-xl font-semibold text-gray-900 dark:text-white">
-              Sky⚡Zero
-            </span>
+        {isMobileMenuOpen ? <ChevronLeft /> : <ChevronRight />}
+      </Button>
+
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "fixed h-full bg-background border-r transition-all duration-300 ease-in-out z-40",
+          isMobile
+            ? `w-64 ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`
+            : isCollapsed
+            ? "w-16"
+            : "w-64",
+          !isMobile && "translate-x-0"
+        )}
+      >
+        <div className="h-16 flex items-center justify-between px-4 border-b">
+          {(!isCollapsed || isMobile) && (
+            <h1 className="text-xl font-semibold">Sky⚡Zero</h1>
           )}
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {isCollapsed ? (
-              <ChevronRight className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-            ) : (
-              <ChevronLeft className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-            )}
-          </button>
+          {!isMobile && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+            >
+              {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
+            </Button>
+          )}
         </div>
 
-        {/* Navigation Items */}
         <nav className="mt-4 flex flex-col h-[calc(100%-4rem)] justify-between">
           <div>
             {menuItems.map((item) => (
-              <button
-                key={item.name}
-                onClick={() => router.push(item.path)}
-                className={`w-full flex items-center px-4 py-3 transition-colors ${
-                  isActivePath(item.path)
-                    ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                }`}
-              >
-                <item.icon
-                  className={`w-5 h-5 ${
-                    isActivePath(item.path)
-                      ? "text-blue-600 dark:text-blue-400"
-                      : "text-gray-500 dark:text-gray-400"
-                  }`}
-                />
-                {!isCollapsed && <span className="ml-4">{item.name}</span>}
-              </button>
+              <TooltipProvider>
+                <Tooltip key={item.name} delayDuration={0}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={isActivePath(item.path) ? "secondary" : "ghost"}
+                      className={cn(
+                        "w-full justify-start h-12 rounded-none",
+                        !isCollapsed && "px-4"
+                      )}
+                      onClick={() => {
+                        router.push(item.path);
+                        isMobile && setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      <item.icon className="h-5 w-5" />
+                      {(!isCollapsed || isMobile) && (
+                        <span className="ml-4">{item.name}</span>
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  {isCollapsed && !isMobile && (
+                    <TooltipContent side="right">
+                      <p>{item.name}</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
             ))}
           </div>
 
-          {/* Bottom Section */}
-          <div className="border-t border-gray-200 dark:border-gray-700 pt-2 pb-4">
-            <button
-              onClick={() => router.push("/settings")}
-              className="w-full flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            >
-              <Settings className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-              {!isCollapsed && <span className="ml-4">Settings</span>}
-            </button>
+          <div className="border-t pt-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="w-full h-12 rounded-none justify-start"
+                >
+                  <Settings className="h-5 w-5" />
+                  {(!isCollapsed || isMobile) && (
+                    <span className="ml-4">Settings</span>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={() => router.push("/profile")}>
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/settings")}>
+                  Settings
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-            <button
+            <Button
+              variant="ghost"
+              className="w-full h-12 rounded-none justify-start text-red-600 hover:bg-red-100/50 dark:text-red-400 dark:hover:bg-red-900/20"
               onClick={handleLogout}
-              className="w-full flex items-center px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
             >
-              <LogOut className="w-5 h-5" />
-              {!isCollapsed && <span className="ml-4">Logout</span>}
-            </button>
+              <LogOut className="h-5 w-5" />
+              {(!isCollapsed || isMobile) && (
+                <span className="ml-4">Logout</span>
+              )}
+            </Button>
           </div>
         </nav>
-      </div>
+      </aside>
 
       {/* Main Content */}
       <div
-        className={`flex-1 transition-all duration-300 ${
-          isCollapsed ? "ml-16" : "ml-64"
-        }`}
+        className={cn(
+          "flex-1 transition-all duration-300",
+          !isMobile && isCollapsed ? "ml-16" : "ml-64",
+          isMobile && "ml-0"
+        )}
       >
-        {/* Top Navigation */}
-        <div className="h-16 bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-          <div className="h-full px-4 flex items-center justify-end space-x-4">
-            <ThemeToggle />
-            {user && (
-              <div className="relative" ref={userMenuRef}>
-                <button
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        <header className="h-16 border-b flex items-center justify-end px-4 gap-4">
+          <ThemeToggle />
+          {user && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="gap-2">
+                  <User className="h-5 w-5" />
+                  <span className="hidden sm:inline">{user.email}</span>
+                  <ChevronDown className="h-4 w-4 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => router.push("/profile")}>
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/settings")}>
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-red-600 focus:bg-red-100/50 dark:text-red-400 dark:focus:bg-red-900/20"
+                  onClick={handleLogout}
                 >
-                  <User className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                  <span className="text-sm text-gray-700 dark:text-gray-200">
-                    {user.email}
-                  </span>
-                  <ChevronDown className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                </button>
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </header>
 
-                {/* Custom Dropdown Menu */}
-                {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
-                    <button
-                      onClick={() => {
-                        router.push("/profile");
-                        setIsUserMenuOpen(false);
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      Profile
-                    </button>
-                    <button
-                      onClick={() => {
-                        router.push("/settings");
-                        setIsUserMenuOpen(false);
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      Settings
-                    </button>
-                    <button
-                      onClick={() => {
-                        handleLogout();
-                        setIsUserMenuOpen(false);
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                    >
-                      Logout
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
+        <main className="p-4 sm:p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto">
+            <ErrorBoundary fallback={<ErrorFallback />}>
+              <Suspense fallback={<LoadingSkeleton />}>{children}</Suspense>
+            </ErrorBoundary>
           </div>
-        </div>
-
-        <main className="py-10 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">{children}</div>
         </main>
+      </div>
+    </div>
+  );
+}
+
+// components/ErrorFallback.tsx
+function ErrorFallback() {
+  return (
+    <div className="p-6 bg-red-100/30 rounded-lg border border-red-200 dark:bg-red-900/20 dark:border-red-800">
+      <h2 className="text-xl font-semibold text-red-800 dark:text-red-200">
+        Something went wrong!
+      </h2>
+      <p className="mt-2 text-red-700 dark:text-red-300">
+        Please refresh the page or try again later.
+      </p>
+    </div>
+  );
+}
+
+// components/LoadingSkeleton.tsx
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-4">
+      <Skeleton className="h-10 w-[200px]" />
+      <Skeleton className="h-[400px] w-full" />
+      <div className="flex gap-4">
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-32 w-full" />
       </div>
     </div>
   );
