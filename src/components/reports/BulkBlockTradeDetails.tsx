@@ -1,6 +1,12 @@
+import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 import { apiService } from "@/lib/api/services/api.service";
-import React, { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { TimeFrameSelector } from "@/components/ui/time-frame-selector";
+import { Card } from "../ui/card";
+import { Badge } from "../ui/badge";
+import { Skeleton } from "../ui/skeleton";
+import { Alert } from "../ui/alert";
+import { Button } from "../ui/button";
 
 interface MarketData {
   Symbol: string;
@@ -25,65 +31,24 @@ interface Trader {
   BD_REMARKS: string;
 }
 
-const Card: React.FC<{ children: React.ReactNode; className?: string }> = ({
-  children,
-  className = "",
-}) => (
-  <div
-    className={`rounded-xl border border-gray-300 bg-white shadow-md transition-transform 
-    transform hover:scale-105 dark:border-gray-700 dark:bg-gray-800 ${className}`}
-  >
-    {children}
-  </div>
-);
-
-const fetchTrades = async (timeFrame: string, params: string) => {
-  try {
-    const response = apiService.bulkDeals.getDetails(timeFrame, params);
-    if (!response) {
-      throw new Error("Failed to fetch trades");
-    }
-    return response;
-  } catch (error) {
-    throw new Error(error.message);
-  }
-};
-
-const LoadingState = () => (
-  <div className="flex items-center justify-center min-h-[200px]">
-    <div className="flex flex-col items-center space-y-4">
-      <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-      <p className="text-gray-500 dark:text-gray-400">Loading trades...</p>
-    </div>
-  </div>
-);
-
-const ErrorState = ({ error, onRetry }) => (
-  <div className="flex flex-col items-center justify-center min-h-[200px] space-y-4">
-    <p className="text-red-500 dark:text-red-400">{error}</p>
-    <button
-      onClick={onRetry}
-      className="px-5 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 focus:ring-2 
-      focus:ring-blue-400 transition-all"
-    >
-      Try Again
-    </button>
-  </div>
-);
-
 const BulkBlockTradeInsights = () => {
+  const [tradeType, setTradeType] = useState<"bulk" | "block">("block");
+  const [timeFrame, setTimeFrame] = useState("recent");
   const [insights, setInsights] = useState<MarketData[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadTrades = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await fetchTrades("today", "bulk_data");
-      setInsights(data);
+      const response = await apiService.bulkDeals.getDetails(
+        timeFrame,
+        `${tradeType}_data`
+      );
+      setInsights(response.data);
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : "Failed to fetch insights");
     } finally {
       setLoading(false);
     }
@@ -91,117 +56,197 @@ const BulkBlockTradeInsights = () => {
 
   useEffect(() => {
     loadTrades();
-  }, []);
+  }, [timeFrame, tradeType]);
 
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between gap-4">
+        <h1 className="text-2xl font-bold text-foreground">
+          {tradeType === "block"
+            ? "Block Trade Insights"
+            : "Bulk Deal Insights"}
+        </h1>
+
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex gap-1 p-1 bg-muted rounded-lg">
+            <Button
+              variant={tradeType === "block" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setTradeType("block")}
+              className="rounded-md"
+            >
+              Block Trades
+            </Button>
+            <Button
+              variant={tradeType === "bulk" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setTradeType("bulk")}
+              className="rounded-md"
+            >
+              Bulk Deals
+            </Button>
+          </div>
+
+          <TimeFrameSelector value={timeFrame} onChange={setTimeFrame} />
+        </div>
+      </div>
+
+      {loading ? (
+        <LoadingState />
+      ) : error ? (
+        <ErrorState error={error} onRetry={loadTrades} />
+      ) : insights.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {insights.map((item) => (
+            <InsightCard key={item.Symbol} data={item} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const InsightCard = ({ data }: { data: MarketData }) => {
   const getTrendColor = (trend: string) => {
-    switch (trend) {
-      case "Bullish":
-        return "text-green-500";
-      case "Bearish":
-        return "text-red-500";
+    switch (trend.toLowerCase()) {
+      case "bullish":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100";
+      case "bearish":
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100";
       default:
-        return "text-gray-500";
+        return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
     }
   };
 
-  if (loading) return <LoadingState />;
-  if (error) return <ErrorState error={error} onRetry={loadTrades} />;
-  if (!insights) return null;
-
   return (
-      <div className="space-y-4 max-w-4xl mx-auto p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {insights.data.map((item) => (
-            <Card key={item.Symbol}>
-              {/* Card Header */}
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {item.Symbol}
-                  </h3>
-                  <span
-                    className={`px-2 py-1 rounded-full text-sm font-medium bg-opacity-10 
-                    ${getTrendColor(item.PriceTrend)}`}
-                  >
-                    {item.PriceTrend}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  {item.SecurityName}
-                </p>
-              </div>
-
-              {/* Card Content */}
-              <div className="p-6 space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Avg Buy Price
-                    </p>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">
-                      ₹{parseFloat(item.AvgBuyPrice).toFixed(2)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Avg Sell Price
-                    </p>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">
-                      ₹{parseFloat(item.AvgSellPrice || "0").toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Top Buyers Section */}
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
-                    Top Buyers
-                  </h3>
-                  <div className="space-y-2">
-                    {item.TopBuyers.map((buyer, index) => (
-                      <div
-                        key={index}
-                        className="p-2 rounded-lg bg-gray-50 dark:bg-gray-700"
-                      >
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          {buyer.BD_CLIENT_NAME}
-                        </p>
-                        <p className="text-gray-500 dark:text-gray-400">
-                          ₹{buyer.BD_TP_WATP.toFixed(2)} - {buyer.BD_DT_DATE}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Top Sellers Section */}
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
-                    Top Sellers
-                  </h3>
-                  <div className="space-y-2">
-                    {item.TopSellers.map((seller, index) => (
-                      <div
-                        key={index}
-                        className="p-2 rounded-lg bg-gray-50 dark:bg-gray-700"
-                      >
-                        <p className="font-medium text-gray-900 dark:text-white">
-                          {seller.BD_CLIENT_NAME}
-                        </p>
-                        <p className="text-gray-500 dark:text-gray-400">
-                          ₹{seller.BD_TP_WATP.toFixed(2)} - {seller.BD_DT_DATE}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </Card>
-          ))}
+    <Card className="hover:shadow-lg transition-shadow">
+      <div className="p-6 border-b">
+        <div className="flex justify-between items-start">
+          <div>
+            <h3 className="text-lg font-semibold">{data.Symbol}</h3>
+            <p className="text-sm text-muted-foreground line-clamp-2">
+              {data.SecurityName}
+            </p>
+          </div>
+          <Badge className={cn(getTrendColor(data.PriceTrend), "ml-2")}>
+            {data.PriceTrend}
+          </Badge>
         </div>
       </div>
+
+      <div className="p-6 space-y-6">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">Avg Buy</p>
+            <p className="text-lg font-semibold">
+              ₹{parseFloat(data.AvgBuyPrice).toFixed(2)}
+            </p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground">Avg Sell</p>
+            <p className="text-lg font-semibold">
+              ₹{parseFloat(data.AvgSellPrice || "0").toFixed(2)}
+            </p>
+          </div>
+        </div>
+
+        <TraderSection title="Top Buyers" traders={data.TopBuyers} />
+        <TraderSection title="Top Sellers" traders={data.TopSellers} />
+      </div>
+    </Card>
   );
 };
+
+const TraderSection = ({
+  title,
+  traders,
+}: {
+  title: string;
+  traders: Trader[];
+}) => (
+  <div>
+    <h4 className="text-sm font-medium text-muted-foreground mb-3">{title}</h4>
+    <div className="space-y-2">
+      {traders.map((trader, index) => (
+        <div
+          key={index}
+          className="p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+        >
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="font-medium">{trader.BD_CLIENT_NAME}</p>
+              <p className="text-sm text-muted-foreground">
+                {new Date(trader.BD_DT_DATE).toLocaleDateString("en-IN")}
+              </p>
+            </div>
+            <Badge variant="outline" className="ml-2">
+              ₹{trader.BD_TP_WATP.toFixed(2)}
+            </Badge>
+          </div>
+          {trader.BD_REMARKS && (
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+              {trader.BD_REMARKS}
+            </p>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const LoadingState = () => (
+  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+    {[...Array(3)].map((_, i) => (
+      <Card key={i} className="p-6">
+        <div className="space-y-4">
+          <div className="flex justify-between">
+            <div className="space-y-2">
+              <Skeleton className="h-6 w-24" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+            <Skeleton className="h-6 w-16 rounded-full" />
+          </div>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+            </div>
+            <Skeleton className="h-[120px] w-full" />
+            <Skeleton className="h-[120px] w-full" />
+          </div>
+        </div>
+      </Card>
+    ))}
+  </div>
+);
+
+const ErrorState = ({
+  error,
+  onRetry,
+}: {
+  error: string;
+  onRetry: () => void;
+}) => (
+  <div className="flex flex-col items-center justify-center min-h-[200px] space-y-4">
+    <Alert variant="destructive">{error}</Alert>
+    <Button onClick={onRetry} variant="outline">
+      Retry
+    </Button>
+  </div>
+);
+
+const EmptyState = () => (
+  <div className="flex flex-col items-center justify-center min-h-[200px] space-y-4">
+    <div className="text-center space-y-2">
+      <p className="text-muted-foreground">No trade insights found</p>
+      <p className="text-sm text-muted-foreground">
+        Try adjusting the time frame or trade type
+      </p>
+    </div>
+  </div>
+);
 
 export default BulkBlockTradeInsights;
 

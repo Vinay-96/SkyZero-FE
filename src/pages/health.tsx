@@ -1,6 +1,6 @@
 import SystemHealthPage from "@/components/Health";
 
-export default function HealthPage() {
+export default function HealthDashboard() {
   return <SystemHealthPage />;
 }
 

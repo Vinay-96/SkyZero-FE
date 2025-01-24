@@ -1,5 +1,15 @@
-import { apiService } from "@/lib/api/services/api.service";
 import { useEffect, useState } from "react";
+import { Card } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { apiService } from "@/lib/api/services/api.service";
 
 interface TransactionCategory {
   totalTransactions: number;
@@ -12,22 +22,7 @@ interface TransactionData {
   [key: string]: TransactionCategory;
 }
 
-// API function for fetching trades
-const fetchTransactions = async (timeFrame: string, params: string) => {
-  try {
-    const response = apiService.insiderDeals.getRecentActivity(
-      timeFrame,
-      params
-    );
-    console.log(response);
-    if (!response) {
-      throw new Error("Failed to fetch trades");
-    }
-    return response;
-  } catch (error) {
-    throw new Error(error.message);
-  }
-};
+const formatNumber = (num: number) => num.toLocaleString("en-IN");
 
 export default function TransactionDashboard() {
   const [data, setData] = useState<TransactionData>({});
@@ -39,12 +34,15 @@ export default function TransactionDashboard() {
   } | null>(null);
 
   useEffect(() => {
+    const abortController = new AbortController();
+
     const fetchData = async () => {
       try {
-        const response = await fetchTransactions("oneWeek", "insider_data");
-        if (!response) throw new Error("Failed to fetch");
-        const data = await response.data;
-        setData(data);
+        const response = await apiService.insiderDeals.getRecentActivity(
+          "oneWeek",
+          "insider_data"
+        );
+        setData(response.data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to fetch data");
       } finally {
@@ -53,6 +51,7 @@ export default function TransactionDashboard() {
     };
 
     fetchData();
+    return () => abortController.abort();
   }, []);
 
   const toggleSection = (category: string, type: "companies" | "persons") => {
@@ -63,155 +62,151 @@ export default function TransactionDashboard() {
     );
   };
 
-  const formatNumber = (num: number) => num.toLocaleString("en-IN");
-
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <LoadingSkeleton />;
   }
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 text-red-700 rounded-lg">
-        Error: {error}
-      </div>
+      <Alert variant="destructive" className="m-4">
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
     );
   }
 
   return (
-    <div className="space-y-6 p-4">
-      <h1 className="text-2xl font-bold text-gray-900 mb-4">
+    <div className={cn("p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto")}>
+      <h1 className="text-2xl font-bold tracking-tight mb-6">
         Transaction Analysis Dashboard
       </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {Object.entries(data).map(([category, details]) => (
-          <div
-            key={category}
-            className="bg-white rounded-lg shadow-sm border border-gray-200"
-          >
-            <div className="p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold truncate" title={category}>
-                {category}
-              </h2>
+          <Card key={category} className="overflow-hidden">
+            <div className="p-4 border-b">
+              <h2 className="text-lg font-semibold truncate">{category}</h2>
             </div>
 
             <div className="p-4 space-y-4">
-              <div className="flex justify-between">
-                <span>Total Transactions</span>
-                <span className="font-medium">{details.totalTransactions}</span>
-              </div>
+              <KeyValuePair
+                label="Total Transactions"
+                value={details.totalTransactions}
+              />
+              <KeyValuePair
+                label="Total Securities"
+                value={formatNumber(details.totalSecuritiesAcquired)}
+              />
 
-              <div className="flex justify-between">
-                <span>Total Securities</span>
-                <span className="font-medium">
-                  {formatNumber(details.totalSecuritiesAcquired)}
-                </span>
-              </div>
+              <ExpandableSection
+                category={category}
+                type="companies"
+                count={Object.keys(details.companies).length}
+                expandedSection={expandedSection}
+                onToggle={toggleSection}
+                data={details.companies}
+              />
 
-              <div className="space-y-2">
-                <button
-                  onClick={() => toggleSection(category, "companies")}
-                  className="w-full text-left flex justify-between items-center p-2 hover:bg-gray-50 rounded"
-                >
-                  <span>
-                    Companies ({Object.keys(details.companies).length})
-                  </span>
-                  <svg
-                    className={`w-5 h-5 transform transition-transform ${
-                      expandedSection?.category === category &&
-                      expandedSection.type === "companies"
-                        ? "rotate-180"
-                        : ""
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </button>
-
-                {expandedSection?.category === category &&
-                  expandedSection.type === "companies" && (
-                    <div className="bg-gray-50 p-2 rounded max-h-48 overflow-y-auto">
-                      {Object.entries(details.companies).map(
-                        ([name, count]) => (
-                          <div
-                            key={name}
-                            className="flex justify-between py-1 px-2 text-sm"
-                          >
-                            <span className="truncate" title={name}>
-                              {name}
-                            </span>
-                            <span className="font-medium">
-                              {formatNumber(count)}
-                            </span>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  )}
-              </div>
-
-              <div className="space-y-2">
-                <button
-                  onClick={() => toggleSection(category, "persons")}
-                  className="w-full text-left flex justify-between items-center p-2 hover:bg-gray-50 rounded"
-                >
-                  <span>Persons ({Object.keys(details.persons).length})</span>
-                  <svg
-                    className={`w-5 h-5 transform transition-transform ${
-                      expandedSection?.category === category &&
-                      expandedSection.type === "persons"
-                        ? "rotate-180"
-                        : ""
-                    }`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </button>
-
-                {expandedSection?.category === category &&
-                  expandedSection.type === "persons" && (
-                    <div className="bg-gray-50 p-2 rounded max-h-48 overflow-y-auto">
-                      {Object.entries(details.persons).map(([name, count]) => (
-                        <div
-                          key={name}
-                          className="flex justify-between py-1 px-2 text-sm"
-                        >
-                          <span className="truncate" title={name}>
-                            {name}
-                          </span>
-                          <span className="font-medium">
-                            {formatNumber(count)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-              </div>
+              <ExpandableSection
+                category={category}
+                type="persons"
+                count={Object.keys(details.persons).length}
+                expandedSection={expandedSection}
+                onToggle={toggleSection}
+                data={details.persons}
+              />
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>
   );
 }
+
+interface ExpandableSectionProps {
+  category: string;
+  type: "companies" | "persons";
+  count: number;
+  expandedSection: { category: string; type: "companies" | "persons" } | null;
+  onToggle: (category: string, type: "companies" | "persons") => void;
+  data: Record<string, number>;
+}
+
+const ExpandableSection = ({
+  category,
+  type,
+  count,
+  expandedSection,
+  onToggle,
+  data,
+}: ExpandableSectionProps) => {
+  const isExpanded =
+    expandedSection?.category === category && expandedSection.type === type;
+
+  return (
+    <Collapsible
+      open={isExpanded}
+      onOpenChange={() => onToggle(category, type)}
+    >
+      <CollapsibleTrigger className="w-full">
+        <div className="flex justify-between items-center p-2 hover:bg-muted rounded-md">
+          <span className="text-sm">
+            {type.charAt(0).toUpperCase() + type.slice(1)} ({count})
+          </span>
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 transition-transform",
+              isExpanded ? "rotate-180" : ""
+            )}
+          />
+        </div>
+      </CollapsibleTrigger>
+
+      <CollapsibleContent>
+        <div className="bg-muted/50 p-2 rounded-md max-h-48 overflow-y-auto">
+          {Object.entries(data).map(([name, count]) => (
+            <div key={name} className="flex justify-between py-1 px-2 text-sm">
+              <span className="truncate">{name}</span>
+              <span className="font-medium">{formatNumber(count)}</span>
+            </div>
+          ))}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+};
+
+const KeyValuePair = ({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) => (
+  <div className="flex justify-between items-center">
+    <span className="text-muted-foreground text-sm">{label}</span>
+    <span className="font-medium">{value}</span>
+  </div>
+);
+
+const LoadingSkeleton = () => (
+  <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+    <Skeleton className="h-8 w-[300px]" />
+
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {[...Array(3)].map((_, i) => (
+        <Card key={i} className="overflow-hidden">
+          <div className="p-4 border-b">
+            <Skeleton className="h-6 w-32" />
+          </div>
+          <div className="p-4 space-y-4">
+            <Skeleton className="h-5 w-full" />
+            <Skeleton className="h-5 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        </Card>
+      ))}
+    </div>
+  </div>
+);
 

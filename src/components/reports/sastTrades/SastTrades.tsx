@@ -1,5 +1,16 @@
-import { apiService } from "@/lib/api/services/api.service";
 import { useEffect, useState } from "react";
+import { Card } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ChevronDown, FileText } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { apiService } from "@/lib/api/services/api.service";
 
 interface Transaction {
   acquirerName: string;
@@ -18,19 +29,6 @@ interface CompanyData {
   Both: Transaction[];
 }
 
-// API function for fetching trades
-const fetchTransactions = async (timeFrame: string, params: string) => {
-  try {
-    const response = apiService.sastDeals.getAll(timeFrame, params);
-    if (!response) {
-      throw new Error("Failed to fetch trades");
-    }
-    return response;
-  } catch (error) {
-    throw new Error(error.message);
-  }
-};
-
 export default function MinimalTransactions() {
   const [data, setData] = useState<Record<string, CompanyData>>({});
   const [loading, setLoading] = useState(true);
@@ -38,12 +36,15 @@ export default function MinimalTransactions() {
   const [expandedCompany, setExpandedCompany] = useState<string | null>(null);
 
   useEffect(() => {
+    const abortController = new AbortController();
+
     const fetchData = async () => {
       try {
-        const response = await fetchTransactions("oneWeek", "SAST_data");
-        if (!response) throw new Error("Failed to fetch");
-        const data = await response.data;
-        setData(data);
+        const response = await apiService.sastDeals.getAll(
+          "oneWeek",
+          "SAST_data"
+        );
+        setData(response.data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to fetch data");
       } finally {
@@ -52,121 +53,217 @@ export default function MinimalTransactions() {
     };
 
     fetchData();
+    return () => abortController.abort();
   }, []);
+
+  const formatNumber = (num: string | null) =>
+    num ? parseInt(num).toLocaleString("en-IN") : "-";
 
   const formatPercentage = (value: string | null) =>
     value ? `${parseFloat(value).toFixed(2)}%` : "-";
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <LoadingSkeleton />;
   }
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 text-red-700 rounded-lg">
-        Error: {error}
-      </div>
+      <Alert variant="destructive" className="m-4">
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
     );
   }
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto p-4">
       {Object.entries(data).map(([company, transactions]) => (
-        <div key={company} className="border rounded-lg shadow-sm">
-          <button
-            onClick={() =>
-              setExpandedCompany((prev) => (prev === company ? null : company))
-            }
-            className="w-full p-4 text-left flex justify-between items-center hover:bg-gray-50"
-          >
-            <h3 className="font-medium">{company}</h3>
-            <svg
-              className={`w-5 h-5 transform transition-transform ${
-                expandedCompany === company ? "rotate-180" : ""
-              }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
-
-          {expandedCompany === company && (
-            <div className="p-4 pt-0 space-y-4">
-              {(["Acquisition", "Sale", "Both"] as const).map(
-                (type) =>
-                  transactions[type].length > 0 && (
-                    <div key={type} className="border-t pt-4">
-                      <h4 className="text-sm font-medium mb-2">
-                        {type} ({transactions[type].length})
-                      </h4>
-                      <div className="space-y-2">
-                        {transactions[type].map((txn, index) => (
-                          <div
-                            key={index}
-                            className="text-sm p-3 bg-gray-50 rounded-lg"
-                          >
-                            <div className="flex justify-between">
-                              <span className="font-medium">
-                                {txn.acquirerName}
-                              </span>
-                              <span className="text-gray-600">
-                                {txn.timestamp.split(" ")[0]}
-                              </span>
-                            </div>
-                            <div className="flex justify-between mt-1">
-                              <span>
-                                {txn.noOfShareAcq ? `+${txn.noOfShareAcq}` : ""}
-                                {txn.noOfShareSale
-                                  ? `-${txn.noOfShareSale}`
-                                  : ""}{" "}
-                                shares
-                              </span>
-                              <span
-                                className={`${
-                                  type === "Acquisition"
-                                    ? "text-green-600"
-                                    : type === "Sale"
-                                    ? "text-red-600"
-                                    : "text-blue-600"
-                                }`}
-                              >
-                                {formatPercentage(
-                                  txn.totAcqShare || txn.totSaleShare
-                                )}
-                              </span>
-                            </div>
-                            {txn.attachement && (
-                              <a
-                                href={txn.attachement}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 text-xs mt-1 inline-block hover:underline"
-                              >
-                                View Document
-                              </a>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )
-              )}
-            </div>
-          )}
-        </div>
+        <CompanyAccordion
+          key={company}
+          company={company}
+          transactions={transactions}
+          expanded={expandedCompany === company}
+          onExpand={() =>
+            setExpandedCompany((prev) => (prev === company ? null : company))
+          }
+          formatNumber={formatNumber}
+          formatPercentage={formatPercentage}
+        />
       ))}
     </div>
   );
 }
 
+interface CompanyAccordionProps {
+  company: string;
+  transactions: CompanyData;
+  expanded: boolean;
+  onExpand: () => void;
+  formatNumber: (num: string | null) => string;
+  formatPercentage: (value: string | null) => string;
+}
+
+const CompanyAccordion = ({
+  company,
+  transactions,
+  expanded,
+  onExpand,
+  formatNumber,
+  formatPercentage,
+}: CompanyAccordionProps) => (
+  <Collapsible open={expanded} onOpenChange={onExpand}>
+    <Card className="overflow-hidden">
+      <CollapsibleTrigger className="w-full">
+        <div className="p-4 flex justify-between items-center hover:bg-muted/50 transition-colors">
+          <h3 className="font-medium">{company}</h3>
+          <ChevronDown
+            className={cn(
+              "w-5 h-5 text-muted-foreground transition-transform",
+              expanded ? "rotate-180" : ""
+            )}
+          />
+        </div>
+      </CollapsibleTrigger>
+
+      <CollapsibleContent>
+        <div className="p-4 pt-0 space-y-4">
+          {(["Acquisition", "Sale", "Both"] as const).map(
+            (type) =>
+              transactions[type].length > 0 && (
+                <TransactionSection
+                  key={type}
+                  type={type}
+                  transactions={transactions[type]}
+                  formatNumber={formatNumber}
+                  formatPercentage={formatPercentage}
+                />
+              )
+          )}
+        </div>
+      </CollapsibleContent>
+    </Card>
+  </Collapsible>
+);
+
+interface TransactionSectionProps {
+  type: "Acquisition" | "Sale" | "Both";
+  transactions: Transaction[];
+  formatNumber: (num: string | null) => string;
+  formatPercentage: (value: string | null) => string;
+}
+
+const TransactionSection = ({
+  type,
+  transactions,
+  formatNumber,
+  formatPercentage,
+}: TransactionSectionProps) => {
+  const variant =
+    type === "Acquisition"
+      ? "success"
+      : type === "Sale"
+      ? "destructive"
+      : "info";
+
+  return (
+    <div className="border-t pt-4">
+      <div className="flex items-center gap-2 mb-3">
+        <Badge variant={variant} className="text-xs">
+          {type} ({transactions.length})
+        </Badge>
+      </div>
+
+      <div className="space-y-2">
+        {transactions.map((txn, index) => (
+          <TransactionCard
+            key={index}
+            txn={txn}
+            type={type}
+            formatNumber={formatNumber}
+            formatPercentage={formatPercentage}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+interface TransactionCardProps {
+  txn: Transaction;
+  type: "Acquisition" | "Sale" | "Both";
+  formatNumber: (num: string | null) => string;
+  formatPercentage: (value: string | null) => string;
+}
+
+const TransactionCard = ({
+  txn,
+  type,
+  formatNumber,
+  formatPercentage,
+}: TransactionCardProps) => {
+  const shares =
+    type === "Acquisition"
+      ? txn.noOfShareAcq
+      : type === "Sale"
+      ? txn.noOfShareSale
+      : txn.noOfShareAcq || txn.noOfShareSale;
+
+  return (
+    <Card className="p-3 bg-muted/50">
+      <div className="flex justify-between items-center">
+        <span className="font-medium text-sm">{txn.acquirerName}</span>
+        <span className="text-muted-foreground text-sm">
+          {new Date(txn.timestamp).toLocaleDateString()}
+        </span>
+      </div>
+
+      <div className="flex justify-between items-center mt-1">
+        <span className="text-sm">
+          {type !== "Sale" &&
+            txn.noOfShareAcq &&
+            `+${formatNumber(txn.noOfShareAcq)}`}
+          {type !== "Acquisition" &&
+            txn.noOfShareSale &&
+            `-${formatNumber(txn.noOfShareSale)}`}{" "}
+          shares
+        </span>
+        <span
+          className={cn(
+            "text-sm font-medium",
+            type === "Acquisition"
+              ? "text-success"
+              : type === "Sale"
+              ? "text-destructive"
+              : "text-info"
+          )}
+        >
+          {formatPercentage(txn.totAcqShare || txn.totSaleShare)}
+        </span>
+      </div>
+
+      {txn.attachement && (
+        <a
+          href={txn.attachement}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 text-primary text-xs mt-2 hover:underline"
+        >
+          <FileText className="w-4 h-4" />
+          View Document
+        </a>
+      )}
+    </Card>
+  );
+};
+
+const LoadingSkeleton = () => (
+  <div className="space-y-4 max-w-4xl mx-auto p-4">
+    {[...Array(3)].map((_, i) => (
+      <Card key={i} className="overflow-hidden">
+        <div className="p-4 flex justify-between items-center">
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-5 w-5 rounded-full" />
+        </div>
+      </Card>
+    ))}
+  </div>
+);

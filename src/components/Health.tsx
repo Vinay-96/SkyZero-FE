@@ -6,14 +6,18 @@ import {
   Cpu,
   Disc,
   AlertCircle,
-  CheckCircle,
-  XCircle,
   AlertTriangle,
   Signal,
   Clock,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { apiService } from "@/lib/api/services/api.service";
-
+import { Card } from "./ui/card";
+import { Badge } from "./ui/badge";
+import { Skeleton } from "./ui/skeleton";
+import { Alert } from "./ui/alert";
+import { Button } from "./ui/button";
+import { Progress } from "./ui/progress";
 interface SystemHealth {
   server: {
     status: string;
@@ -45,214 +49,259 @@ interface SystemHealth {
   status: string;
 }
 
-// API function for fetching trades
-const fetchAppHealth = async () => {
-  try {
-    const response = apiService.health.getApplicationHealth();
-    if (!response) {
-      throw new Error("Failed to fetch trades");
-    }
-    return response;
-  } catch (error) {
-    throw new Error(error.message);
+const getStatusVariant = (status: string) => {
+  switch (status.toLowerCase()) {
+    case "up":
+    case "healthy":
+    case "connected":
+      return "success";
+    case "unhealthy":
+      return "destructive";
+    default:
+      return "warning";
   }
 };
 
-export default function SystemHealthPage() {
+const SystemHealthPage = () => {
   const [data, setData] = useState<SystemHealth | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  useEffect(() => {
-    const fetchHealthData = async () => {
-      try {
-        const response = await fetchAppHealth();
-        if (!response) throw new Error("Failed to fetch health data");
-        const data = await response.data;
-        setData(data[0]);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to fetch data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchHealthData();
-  }, []);
-
-  const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "up":
-      case "healthy":
-      case "connected":
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
-      case "unhealthy":
-        return <XCircle className="w-5 h-5 text-red-500" />;
-      default:
-        return <AlertCircle className="w-5 h-5 text-yellow-500" />;
+  const fetchHealthData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await apiService.health.getApplicationHealth();
+      if (!response.data) throw new Error("Invalid health data structure");
+      setData(response.data[0]);
+      setLastUpdated(new Date());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch data");
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    fetchHealthData();
+    const interval = setInterval(fetchHealthData, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
-  if (error || !data) {
-    return (
-      <div className="p-4 bg-red-50 text-red-700 rounded-lg mx-4 my-8">
-        Error: {error || "No health data available"}
-      </div>
-    );
-  }
+  if (loading) return <LoadingState />;
+  if (error) return <ErrorState error={error} onRetry={fetchHealthData} />;
+  if (!data) return <EmptyState />;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="mb-8 p-4 rounded-lg bg-red-50 border border-red-200 flex items-center gap-3">
-        <AlertTriangle className="w-6 h-6 text-red-600" />
-        <div>
-          <h2 className="text-xl font-semibold text-red-800">
-            System Status: {data.status}
-          </h2>
-          {data.resourceAlerts.length > 0 && (
-            <ul className="list-disc pl-5 mt-2">
-              {data.resourceAlerts.map((alert, i) => (
-                <li key={i} className="text-red-700">
-                  {alert}
-                </li>
-              ))}
-            </ul>
-          )}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between gap-4">
+        <h1 className="text-2xl font-bold text-foreground">
+          System Health Dashboard
+        </h1>
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <Clock className="h-4 w-4" />
+          Last updated: {lastUpdated.toLocaleTimeString()}
         </div>
       </div>
 
+      {data.resourceAlerts.length > 0 && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertTriangle className="h-5 w-5" />
+          <div className="space-y-1">
+            <h3 className="font-semibold">System Status: {data.status}</h3>
+            <ul className="list-disc pl-5">
+              {data.resourceAlerts.map((alert, i) => (
+                <li key={i}>{alert}</li>
+              ))}
+            </ul>
+          </div>
+        </Alert>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Server Health */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center gap-3 mb-4">
-            <Server className="w-6 h-6 text-blue-500" />
-            <h3 className="text-lg font-semibold">Server Health</h3>
-            {getStatusIcon(data.server.status)}
+        <HealthCard
+          icon={<Server className="h-5 w-5" />}
+          title="Server Health"
+          status={data.server.status}
+        >
+          <MetricItem
+            label="Uptime"
+            value={`${data.server.uptime.toFixed(2)} days`}
+          />
+          <MetricItem label="Node Version" value={data.server.nodeVersion} />
+          <MetricItem
+            label="Load Average"
+            value={data.server.systemLoadAverage.join(" / ")}
+          />
+        </HealthCard>
+
+        <HealthCard
+          icon={<MemoryStick className="h-5 w-5" />}
+          title="Memory Usage"
+          status={data.server.status}
+        >
+          {Object.entries(data.server.memoryUsage).map(([key, value]) => (
+            <MetricItem key={key} label={key} value={value} />
+          ))}
+        </HealthCard>
+
+        <HealthCard
+          icon={<Cpu className="h-5 w-5" />}
+          title="CPU Usage"
+          status={data.server.status}
+        >
+          <MetricItem label="Model" value={data.server.cpuUsage.model} />
+          <MetricItem
+            label="Usage"
+            value={data.server.cpuUsage.cpuUsagePercent}
+          />
+        </HealthCard>
+
+        <HealthCard
+          icon={<Database className="h-5 w-5" />}
+          title="Database"
+          status={data.database.status}
+        >
+          <MetricItem
+            label="Response Time"
+            value={data.database.responseTime}
+          />
+        </HealthCard>
+
+        <HealthCard
+          icon={<Signal className="h-5 w-5" />}
+          title="Redis"
+          status={data.redis.status}
+        >
+          <MetricItem label="Response Time" value={data.redis.responseTime} />
+        </HealthCard>
+
+        <HealthCard
+          icon={<Clock className="h-5 w-5" />}
+          title="External API"
+          status={data.externalAPI.status}
+        />
+
+        <HealthCard
+          icon={<Disc className="h-5 w-5" />}
+          title="Disk Usage"
+          status={data.disk.status}
+          className="lg:col-span-2"
+        >
+          <div className="grid grid-cols-2 gap-4">
+            <MetricItem label="Total Space" value={data.disk.totalSpace} />
+            <MetricItem label="Used Space" value={data.disk.usedSpace} />
+            <MetricItem
+              label="Available Space"
+              value={data.disk.availableSpace}
+            />
           </div>
           <div className="space-y-2">
-            <div className="flex justify-between">
-              <span>Uptime</span>
-              <span>{data.server.uptime.toFixed(2)} days</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Node Version</span>
-              <span>{data.server.nodeVersion}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Memory Usage */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center gap-3 mb-4">
-            <MemoryStick className="w-6 h-6 text-purple-500" />
-            <h3 className="text-lg font-semibold">Memory Usage</h3>
-          </div>
-          <div className="space-y-2">
-            {Object.entries(data.server.memoryUsage).map(([key, value]) => (
-              <div key={key} className="flex justify-between">
-                <span>{key}</span>
-                <span>{value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* CPU Usage */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center gap-3 mb-4">
-            <Cpu className="w-6 h-6 text-orange-500" />
-            <h3 className="text-lg font-semibold">CPU Usage</h3>
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span>Model</span>
-              <span>{data.server.cpuUsage.model}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Usage</span>
-              <span>{data.server.cpuUsage.cpuUsagePercent}</span>
+            <Progress
+              value={parseFloat(data.disk.usedPercentage)}
+              variant={getStatusVariant(data.disk.status)}
+              className="h-2"
+            />
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Storage Utilization</span>
+              <span>{data.disk.usedPercentage}</span>
             </div>
           </div>
-        </div>
-
-        {/* Database */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center gap-3 mb-4">
-            <Database className="w-6 h-6 text-green-500" />
-            <h3 className="text-lg font-semibold">Database</h3>
-            {getStatusIcon(data.database.status)}
-          </div>
-          <div className="flex justify-between">
-            <span>Response Time</span>
-            <span>{data.database.responseTime}</span>
-          </div>
-        </div>
-
-        {/* Redis */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center gap-3 mb-4">
-            <Signal className="w-6 h-6 text-red-500" />
-            <h3 className="text-lg font-semibold">Redis</h3>
-            {getStatusIcon(data.redis.status)}
-          </div>
-          <div className="flex justify-between">
-            <span>Response Time</span>
-            <span>{data.redis.responseTime}</span>
-          </div>
-        </div>
-
-        {/* External API */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center gap-3 mb-4">
-            <Clock className="w-6 h-6 text-blue-500" />
-            <h3 className="text-lg font-semibold">External API</h3>
-            {getStatusIcon(data.externalAPI.status)}
-          </div>
-        </div>
-
-        {/* Disk Usage */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center gap-3 mb-4">
-            <Disc className="w-6 h-6 text-yellow-500" />
-            <h3 className="text-lg font-semibold">Disk Usage</h3>
-            {getStatusIcon(data.disk.status)}
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span>Total Space</span>
-              <span>{data.disk.totalSpace}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Used Space</span>
-              <span>{data.disk.usedSpace}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Available Space</span>
-              <span>{data.disk.availableSpace}</span>
-            </div>
-            <div className="pt-2">
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-red-500 h-2 rounded-full"
-                  style={{ width: data.disk.usedPercentage }}
-                />
-              </div>
-              <div className="text-right text-sm mt-1">
-                {data.disk.usedPercentage} used
-              </div>
-            </div>
-          </div>
-        </div>
+        </HealthCard>
       </div>
     </div>
   );
+};
+
+interface HealthCardProps {
+  icon: React.ReactNode;
+  title: string;
+  status: string;
+  children?: React.ReactNode;
+  className?: string;
 }
+
+const HealthCard = ({
+  icon,
+  title,
+  status,
+  children,
+  className,
+}: HealthCardProps) => {
+  const variant = getStatusVariant(status);
+
+  return (
+    <Card className={cn("p-6", className)}>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-muted">{icon}</div>
+          <h3 className="text-lg font-semibold">{title}</h3>
+        </div>
+        <Badge variant={variant}>{status}</Badge>
+      </div>
+      {children && <div className="space-y-3">{children}</div>}
+    </Card>
+  );
+};
+
+const MetricItem = ({ label, value }: { label: string; value: string }) => (
+  <div className="flex justify-between items-center">
+    <span className="text-sm text-muted-foreground">{label}</span>
+    <span className="font-medium">{value}</span>
+  </div>
+);
+
+const LoadingState = () => (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {[...Array(7)].map((_, i) => (
+      <Card key={i} className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-10 w-10 rounded-lg" />
+            <Skeleton className="h-6 w-32" />
+          </div>
+          <Skeleton className="h-6 w-20 rounded-full" />
+        </div>
+        <div className="space-y-3">
+          {[...Array(3)].map((_, j) => (
+            <Skeleton key={j} className="h-4 w-full" />
+          ))}
+        </div>
+      </Card>
+    ))}
+  </div>
+);
+
+const ErrorState = ({
+  error,
+  onRetry,
+}: {
+  error: string;
+  onRetry: () => void;
+}) => (
+  <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
+    <Alert variant="destructive" className="max-w-md">
+      <AlertCircle className="h-5 w-5" />
+      <div className="space-y-2">
+        <h3 className="font-semibold">Health Check Failed</h3>
+        <p>{error}</p>
+      </div>
+    </Alert>
+    <Button onClick={onRetry} variant="outline">
+      Retry
+    </Button>
+  </div>
+);
+
+const EmptyState = () => (
+  <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
+    <div className="text-center space-y-2">
+      <AlertCircle className="h-8 w-8 text-muted-foreground mx-auto" />
+      <p className="text-muted-foreground">No health data available</p>
+    </div>
+  </div>
+);
+
+export default SystemHealthPage;
 

@@ -1,6 +1,17 @@
 import { useEffect, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { apiService } from "@/lib/api/services/api.service";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface HoldingChange {
   mode: string;
@@ -14,38 +25,30 @@ interface HoldingChange {
   date: string;
 }
 
-// API function for fetching trades
-const fetchTransactionsMoves = async (timeFrame: string, params: string) => {
-  try {
-    const response = apiService.insiderDeals.getMovements(timeFrame, params);
-    console.log(response);
-    if (!response) {
-      throw new Error("Failed to fetch trades");
-    }
-    return response;
-  } catch (error) {
-    throw new Error(error.message);
-  }
-};
-
 export default function HoldingsTable() {
   const [data, setData] = useState<HoldingChange[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadTradesMoves = async () => {
-    try {
-      const data = await fetchTransactionsMoves("oneWeek", "insider_data");
-      setData(data.data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch data");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const abortController = new AbortController();
+
+    const loadTradesMoves = async () => {
+      try {
+        const response = await apiService.insiderDeals.getMovements(
+          "oneWeek",
+          "insider_data"
+        );
+        setData(response.data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to fetch data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadTradesMoves();
+    return () => abortController.abort();
   }, []);
 
   const formatCurrency = (value: number) => {
@@ -61,99 +64,114 @@ export default function HoldingsTable() {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
+    return <LoadingSkeleton />;
   }
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 text-red-700 rounded-lg">
-        Error: {error}
-      </div>
+      <Alert variant="destructive" className="mt-4">
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Mode
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Company
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Acquirer
-            </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Shares (%)
-            </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Change
-            </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Securities
-            </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Value
-            </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Date
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+    <div className="rounded-lg border shadow-sm overflow-hidden">
+      <Table className="bg-card">
+        <TableHeader className="bg-muted/50">
+          <TableRow>
+            <TableHead>Mode</TableHead>
+            <TableHead>Company</TableHead>
+            <TableHead>Acquirer</TableHead>
+            <TableHead className="text-right">Shares (%)</TableHead>
+            <TableHead className="text-right">Change</TableHead>
+            <TableHead className="text-right">Securities</TableHead>
+            <TableHead className="text-right">Value</TableHead>
+            <TableHead className="text-right">Date</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {data.map((item, index) => (
-            <tr key={index} className="hover:bg-gray-50">
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                {item.mode}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
-                {item.company}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+            <TableRow
+              key={index}
+              className="hover:bg-muted/50 transition-colors"
+            >
+              <TableCell>
+                <Badge variant="outline" className="capitalize">
+                  {item.mode}
+                </Badge>
+              </TableCell>
+              <TableCell className="font-medium">{item.company}</TableCell>
+              <TableCell className="text-muted-foreground">
                 {item.acquirer}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                <span className="block">{item.beforeSharesPer}%</span>
-                <span className="block text-gray-400">
-                  → {item.afterSharesPer}%
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    item.shareChangePercentage >= 0
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
-                  }`}
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex flex-col">
+                  <span>{item.beforeSharesPer}%</span>
+                  <span className="text-muted-foreground text-xs">
+                    → {item.afterSharesPer}%
+                  </span>
+                </div>
+              </TableCell>
+              <TableCell className="text-right">
+                <Badge
+                  variant={
+                    item.shareChangePercentage >= 0 ? "success" : "destructive"
+                  }
+                  className="px-2 py-1 text-xs"
                 >
                   {item.shareChangePercentage >= 0 ? "+" : ""}
                   {item.shareChangePercentage}%
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                </Badge>
+              </TableCell>
+              <TableCell className="text-right">
                 {item.secAcq.toLocaleString("en-IN")}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+              </TableCell>
+              <TableCell className="text-right">
                 {formatCurrency(item.secVal)}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+              </TableCell>
+              <TableCell className="text-right text-muted-foreground">
                 {formatDate(item.date)}
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
+
       {data.length === 0 && (
-        <div className="p-6 text-center text-gray-500">No data available</div>
+        <div className="p-6 text-center text-muted-foreground">
+          No holdings data available
+        </div>
       )}
     </div>
   );
 }
 
+const LoadingSkeleton = () => (
+  <div className="space-y-4">
+    <div className="rounded-lg border shadow-sm overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {[...Array(8)].map((_, i) => (
+              <TableHead key={i}>
+                <Skeleton className="h-6 w-24" />
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {[...Array(5)].map((_, i) => (
+            <TableRow key={i}>
+              {[...Array(8)].map((_, j) => (
+                <TableCell key={j}>
+                  <Skeleton className="h-6 w-full" />
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  </div>
+);

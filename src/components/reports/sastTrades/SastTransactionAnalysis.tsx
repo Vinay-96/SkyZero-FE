@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ArrowUp, ArrowDown, FileText, ChevronDown } from "lucide-react";
 import {
   BarChart,
   Bar,
@@ -7,13 +8,26 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  DocumentIcon,
-} from "@heroicons/react/24/outline";
-import { Tooltip as ReactTooltip } from "react-tooltip";
+import { cn } from "@/lib/utils";
 import { apiService } from "@/lib/api/services/api.service";
+import { Card } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Alert } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface CompanyInsights {
   company: string;
@@ -39,19 +53,6 @@ interface CompanyInsights {
   }>;
 }
 
-// API function for fetching trades
-const fetchTransactions = async (timeFrame: string, params: string) => {
-  try {
-    const response = apiService.sastDeals.getRecentActivity(timeFrame, params);
-    if (!response) {
-      throw new Error("Failed to fetch trades");
-    }
-    return response;
-  } catch (error) {
-    throw new Error(error.message);
-  }
-};
-
 export default function CompanyInsightsDashboard() {
   const [data, setData] = useState<CompanyInsights[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,12 +60,15 @@ export default function CompanyInsightsDashboard() {
   const [expandedCompany, setExpandedCompany] = useState<string | null>(null);
 
   useEffect(() => {
+    const abortController = new AbortController();
+
     const fetchData = async () => {
       try {
-        const response = await fetchTransactions("oneWeek", "SAST_data");
-        if (!response) throw new Error("Failed to fetch");
-        const data = await response.data;
-        setData(data);
+        const response = await apiService.sastDeals.getRecentActivity(
+          "oneWeek",
+          "SAST_data"
+        );
+        setData(response.data);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to fetch data");
       } finally {
@@ -73,259 +77,257 @@ export default function CompanyInsightsDashboard() {
     };
 
     fetchData();
+    return () => abortController.abort();
   }, []);
 
   const formatNumber = (num: number) => num.toLocaleString("en-IN");
   const formatPercentage = (value: string) =>
     `${parseFloat(value).toFixed(2)}%`;
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 bg-red-50 text-red-700 rounded-lg mx-4 my-8">
-        Error: {error}
-      </div>
-    );
-  }
+  if (loading) return <LoadingSkeleton />;
+  if (error) return <Alert variant="destructive">{error}</Alert>;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">
+    <div className={cn("p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto")}>
+      <h1 className="text-2xl font-bold tracking-tight mb-8">
         Corporate Transaction Insights
       </h1>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {data.map((company) => (
-          <div
+          <CompanyAccordion
             key={company.company}
-            className="bg-white rounded-lg shadow-sm border border-gray-200"
-          >
-            <button
-              onClick={() =>
-                setExpandedCompany((prev) =>
-                  prev === company.company ? null : company.company
-                )
-              }
-              className="w-full p-6 text-left flex justify-between items-center hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold">{company.company}</h3>
-                <div className="flex items-center gap-4 mt-2">
-                  <span className="flex items-center text-green-600">
-                    <ArrowUpIcon className="w-4 h-4 mr-1" />
-                    {formatNumber(company.totalAcquiredShares)} Acquired
-                  </span>
-                  <span className="flex items-center text-red-600">
-                    <ArrowDownIcon className="w-4 h-4 mr-1" />
-                    {formatNumber(company.totalSoldShares)} Sold
-                  </span>
-                  {company.signals.map((signal) => (
-                    <span
-                      key={signal}
-                      className={`px-2 py-1 rounded-full text-sm ${
-                        signal.includes("Bullish")
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {signal}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <svg
-                className={`w-6 h-6 transform transition-transform ${
-                  expandedCompany === company.company ? "rotate-180" : ""
-                }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </button>
-
-            {expandedCompany === company.company && (
-              <div className="p-6 pt-0 space-y-6">
-                {/* Volume Analysis */}
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="font-medium mb-4">Transaction Volume</h4>
-                    <ResponsiveContainer width="100%" height={200}>
-                      <BarChart
-                        data={[
-                          {
-                            name: "Acquired",
-                            value: company.totalAcquiredShares,
-                          },
-                          { name: "Sold", value: company.totalSoldShares },
-                        ]}
-                      >
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Bar
-                          dataKey="value"
-                          fill="#3B82F6"
-                          radius={[4, 4, 0, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  {/* Share Change Analysis */}
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="font-medium mb-4">Share Changes</h4>
-                    <div className="space-y-3">
-                      {company.shareChangeDetails.map((change, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between"
-                        >
-                          <div className="flex-1">
-                            <div className="flex justify-between text-sm">
-                              <span>
-                                {formatPercentage(change.percentageChange)}
-                              </span>
-                              <span className="text-gray-500">
-                                {change.beforeChange}% → {change.afterChange}%
-                              </span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <div
-                                className="bg-blue-600 h-2 rounded-full"
-                                style={{
-                                  width: `${Math.min(
-                                    parseFloat(change.percentageChange),
-                                    100
-                                  )}%`,
-                                }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Transaction Modes */}
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <h4 className="font-medium mb-2">Acquisition Modes</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {company.acquisitionModes.map((mode) => (
-                        <span
-                          key={mode}
-                          className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
-                        >
-                          {mode}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="p-4 bg-red-50 rounded-lg">
-                    <h4 className="font-medium mb-2">Sale Modes</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {company.saleModes.map((mode) => (
-                        <span
-                          key={mode}
-                          className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-sm"
-                        >
-                          {mode}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Significant Transactions */}
-                {company.significantTransactions.length > 0 && (
-                  <div>
-                    <h4 className="font-medium mb-4">Key Transactions</h4>
-                    <div className="border rounded-lg overflow-hidden">
-                      <table className="w-full">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-4 py-2 text-left text-sm">
-                              Party
-                            </th>
-                            <th className="px-4 py-2 text-right text-sm">
-                              Shares
-                            </th>
-                            <th className="px-4 py-2 text-right text-sm">
-                              Change
-                            </th>
-                            <th className="px-4 py-2 text-right text-sm">
-                              Date
-                            </th>
-                            <th className="px-4 py-2 text-right text-sm">
-                              Document
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {company.significantTransactions.map((txn, index) => (
-                            <tr
-                              key={index}
-                              className="border-t hover:bg-gray-50"
-                            >
-                              <td className="px-4 py-3 text-sm max-w-[200px] truncate">
-                                {txn.acquirerName}
-                              </td>
-                              <td className="px-4 py-3 text-right text-sm">
-                                {txn.noOfShareAcq ? `+${txn.noOfShareAcq}` : ""}
-                                {txn.noOfShareSale
-                                  ? `-${txn.noOfShareSale}`
-                                  : ""}
-                              </td>
-                              <td className="px-4 py-3 text-right text-sm">
-                                {txn.totAcqShare &&
-                                  formatPercentage(txn.totAcqShare)}
-                                {txn.totSaleShare &&
-                                  formatPercentage(txn.totSaleShare)}
-                              </td>
-                              <td className="px-4 py-3 text-right text-sm">
-                                {new Date(txn.timestamp).toLocaleDateString()}
-                              </td>
-                              <td className="px-4 py-3 text-right">
-                                <a
-                                  href={txn.attachement}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-600 hover:underline flex items-center justify-end gap-1"
-                                >
-                                  <DocumentIcon className="w-4 h-4" />
-                                  <span className="sr-only">View Document</span>
-                                </a>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+            company={company}
+            expanded={expandedCompany === company.company}
+            onExpand={() =>
+              setExpandedCompany((prev) =>
+                prev === company.company ? null : company.company
+              )
+            }
+            formatNumber={formatNumber}
+            formatPercentage={formatPercentage}
+          />
         ))}
       </div>
-
-      <ReactTooltip effect="solid" place="top" />
     </div>
   );
 }
+
+const CompanyAccordion = ({
+  company,
+  expanded,
+  onExpand,
+  formatNumber,
+  formatPercentage,
+}: {
+  company: CompanyInsights;
+  expanded: boolean;
+  onExpand: () => void;
+  formatNumber: (num: number) => string;
+  formatPercentage: (value: string) => string;
+}) => (
+  <Collapsible open={expanded} onOpenChange={onExpand}>
+    <Card className="overflow-hidden">
+      <CollapsibleTrigger className="w-full">
+        <div className="p-6 flex justify-between items-center hover:bg-muted/50 transition-colors">
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold">{company.company}</h3>
+            <div className="flex items-center gap-4 mt-2">
+              <Badge variant="success" className="gap-1">
+                <ArrowUp className="h-4 w-4" />
+                {formatNumber(company.totalAcquiredShares)} Acquired
+              </Badge>
+              <Badge variant="destructive" className="gap-1">
+                <ArrowDown className="h-4 w-4" />
+                {formatNumber(company.totalSoldShares)} Sold
+              </Badge>
+              {company.signals.map((signal) => (
+                <Badge
+                  key={signal}
+                  variant={
+                    signal.includes("Bullish") ? "success" : "destructive"
+                  }
+                >
+                  {signal}
+                </Badge>
+              ))}
+            </div>
+          </div>
+          <ChevronDown
+            className={cn(
+              "h-6 w-6 transition-transform",
+              expanded ? "rotate-180" : ""
+            )}
+          />
+        </div>
+      </CollapsibleTrigger>
+
+      <CollapsibleContent>
+        <div className="p-6 pt-0 space-y-6">
+          <div className="grid md:grid-cols-2 gap-6">
+            <VolumeChart company={company} />
+            <ShareChanges
+              company={company}
+              formatPercentage={formatPercentage}
+            />
+          </div>
+
+          <TransactionModes company={company} />
+          <SignificantTransactions
+            company={company}
+            formatPercentage={formatPercentage}
+          />
+        </div>
+      </CollapsibleContent>
+    </Card>
+  </Collapsible>
+);
+
+const VolumeChart = ({ company }: { company: CompanyInsights }) => (
+  <Card className="p-4">
+    <h4 className="font-medium mb-4">Transaction Volume</h4>
+    <ResponsiveContainer width="100%" height={200}>
+      <BarChart
+        data={[
+          { name: "Acquired", value: company.totalAcquiredShares },
+          { name: "Sold", value: company.totalSoldShares },
+        ]}
+      >
+        <XAxis dataKey="name" />
+        <YAxis />
+        <Tooltip />
+        <Bar dataKey="value" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+      </BarChart>
+    </ResponsiveContainer>
+  </Card>
+);
+
+const ShareChanges = ({
+  company,
+  formatPercentage,
+}: {
+  company: CompanyInsights;
+  formatPercentage: (value: string) => string;
+}) => (
+  <Card className="p-4">
+    <h4 className="font-medium mb-4">Share Changes</h4>
+    <div className="space-y-4">
+      {company.shareChangeDetails.map((change, index) => (
+        <div key={index} className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span>{formatPercentage(change.percentageChange)}</span>
+            <span className="text-muted-foreground">
+              {change.beforeChange}% → {change.afterChange}%
+            </span>
+          </div>
+          <Progress
+            value={Math.min(parseFloat(change.percentageChange), 100)}
+            className="h-2"
+          />
+        </div>
+      ))}
+    </div>
+  </Card>
+);
+
+const TransactionModes = ({ company }: { company: CompanyInsights }) => (
+  <div className="grid md:grid-cols-2 gap-4">
+    <Card className="p-4">
+      <h4 className="font-medium mb-2">Acquisition Modes</h4>
+      <div className="flex flex-wrap gap-2">
+        {company.acquisitionModes.map((mode) => (
+          <Badge key={mode} variant="outline">
+            {mode}
+          </Badge>
+        ))}
+      </div>
+    </Card>
+    <Card className="p-4">
+      <h4 className="font-medium mb-2">Sale Modes</h4>
+      <div className="flex flex-wrap gap-2">
+        {company.saleModes.map((mode) => (
+          <Badge key={mode} variant="outline">
+            {mode}
+          </Badge>
+        ))}
+      </div>
+    </Card>
+  </div>
+);
+
+const SignificantTransactions = ({
+  company,
+  formatPercentage,
+}: {
+  company: CompanyInsights;
+  formatPercentage: (value: string) => string;
+}) => (
+  <Card>
+    <h4 className="font-medium p-4">Key Transactions</h4>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Party</TableHead>
+          <TableHead className="text-right">Shares</TableHead>
+          <TableHead className="text-right">Change</TableHead>
+          <TableHead className="text-right">Date</TableHead>
+          <TableHead className="text-right">Document</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {company.significantTransactions.map((txn, index) => (
+          <TableRow key={index}>
+            <TableCell className="max-w-[200px] truncate">
+              {txn.acquirerName}
+            </TableCell>
+            <TableCell className="text-right">
+              {txn.noOfShareAcq ? `+${txn.noOfShareAcq}` : ""}
+              {txn.noOfShareSale ? `-${txn.noOfShareSale}` : ""}
+            </TableCell>
+            <TableCell className="text-right">
+              {txn.totAcqShare
+                ? formatPercentage(txn.totAcqShare)
+                : txn.totSaleShare
+                ? formatPercentage(txn.totSaleShare)
+                : "-"}
+            </TableCell>
+            <TableCell className="text-right">
+              {new Date(txn.timestamp).toLocaleDateString()}
+            </TableCell>
+            <TableCell className="text-right">
+              <a
+                href={txn.attachement}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline flex gap-1 justify-end"
+              >
+                <FileText className="h-4 w-4" />
+                <span className="sr-only">View Document</span>
+              </a>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </Card>
+);
+
+const LoadingSkeleton = () => (
+  <div className="space-y-4">
+    {[...Array(3)].map((_, i) => (
+      <Card key={i} className="p-6">
+        <div className="flex justify-between items-center">
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-48" />
+            <div className="flex gap-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <Skeleton className="h-6 w-6 rounded-full" />
+        </div>
+      </Card>
+    ))}
+  </div>
+);
 
