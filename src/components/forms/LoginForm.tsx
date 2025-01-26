@@ -13,7 +13,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/zustand/store";
-import { socketService } from "@/lib/socket";
 import { apiService } from "@/lib/api/services/api.service";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
@@ -45,7 +44,6 @@ export default function LoginForm() {
       const { user, token } = response.data;
 
       setAuth(user, token);
-      // socketService.connect(token);
 
       toast({
         title: "Login Successful",

@@ -5,6 +5,7 @@ import type {
   // LoginCredentials,
   // RegisterData
 } from "../../../types";
+import { useAuthStore } from "@/lib/zustand/store";
 
 export const apiService = {
   // Auth services
@@ -133,6 +134,76 @@ export const apiService = {
   health: {
     getApplicationHealth: async () => {
       const response = await api.get(`${API_ENDPOINTS.HEALTH.HEALTH}`);
+      return response.data;
+    },
+  },
+
+  // Socket data
+  socket: {
+    getRecentOptionAnalytics: async () => {
+      const response = await api.get(
+        `${API_ENDPOINTS.SOCKET.OPTION_ANALYTICS}`,
+        {
+          headers: {
+            Authorization: `Bearer ${useAuthStore.getState().token}`,
+          },
+        }
+      );
+      return response.data;
+    },
+    getRecentOptionDeeplytics: async () => {
+      const response = await api.get(
+        `${API_ENDPOINTS.SOCKET.OPTION_DEEPLYTICS}`,
+        {
+          headers: {
+            Authorization: `Bearer ${useAuthStore.getState().token}`,
+          },
+        }
+      );
+      return response.data;
+    },
+    getIntraday1mCandle: async () => {
+      const response = await api.get(
+        `${API_ENDPOINTS.SOCKET.INTRADAY_1M_CANDLE}`,
+        {
+          headers: {
+            Authorization: `Bearer ${useAuthStore.getState().token}`,
+          },
+        }
+      );
+      return response.data;
+    },
+    getIntraday30mCandle: async () => {
+      const response = await api.get(
+        `${API_ENDPOINTS.SOCKET.INTRADAY_30M_CANDLE}`,
+        {
+          headers: {
+            Authorization: `Bearer ${useAuthStore.getState().token}`,
+          },
+        }
+      );
+      return response.data;
+    },
+    getHistorical1mCandle: async () => {
+      const response = await api.get(
+        `${API_ENDPOINTS.SOCKET.HISTORICAL_1M_CANDLE}`,
+        {
+          headers: {
+            Authorization: `Bearer ${useAuthStore.getState().token}`,
+          },
+        }
+      );
+      return response.data;
+    },
+    getHistorical30mCandle: async () => {
+      const response = await api.get(
+        `${API_ENDPOINTS.SOCKET.HISTORICAL_30M_CANDLE}`,
+        {
+          headers: {
+            Authorization: `Bearer ${useAuthStore.getState().token}`,
+          },
+        }
+      );
       return response.data;
     },
   },

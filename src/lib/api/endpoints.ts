@@ -54,5 +54,14 @@ export const API_ENDPOINTS = {
   HEALTH: {
     HEALTH: `${process.env.NEXT_PUBLIC_API_URL}/health`,
   },
+  // Sockets
+  SOCKET: {
+    OPTION_ANALYTICS: `${API_VERSION}/socket/option-analytics`,
+    OPTION_DEEPLYTICS: `${API_VERSION}/socket/option-deeplytics`,
+    INTRADAY_1M_CANDLE: `${API_VERSION}/socket/intraday-1m-candle`,
+    HISTORICAL_30M_CANDLE: `${API_VERSION}/socket/intraday-30m-candle`,
+    HISTORICAL_1M_CANDLE: `${API_VERSION}/socket/historic-1m-candle`,
+    INTRADAY_30M_CANDLE: `${API_VERSION}/socket/historic-30m-candle`,
+  },
 } as const;
 
