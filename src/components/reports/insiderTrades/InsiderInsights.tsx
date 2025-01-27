@@ -12,7 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Skeleton } from "components/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PotentialSignal {
   company: string;

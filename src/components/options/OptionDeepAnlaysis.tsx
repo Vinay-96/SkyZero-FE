@@ -155,7 +155,7 @@ const OptionCard = memo(
               id={`option-${option.strikePrice}-label`}
             >
               <Badge
-                variant={isCall ? "success" : "destructive"}
+                variant={isCall ? "default" : "destructive"}
                 className="px-2 py-1 aria-label"
                 aria-label={`Option type: ${option.tradeSetup.action}`}
               >
@@ -249,7 +249,7 @@ const OptionCard = memo(
             <Progress
               value={option.enhancedScore}
               className="w-24 h-2 bg-gray-100 dark:bg-gray-700"
-              indicatorClassName="bg-purple-500"
+              className="bg-purple-500"
             />
             <span className="font-medium text-purple-500 dark:text-purple-400">
               {option.enhancedScore.toFixed(1)}

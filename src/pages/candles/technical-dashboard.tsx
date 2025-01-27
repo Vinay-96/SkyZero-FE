@@ -33,13 +33,13 @@ export default function AnalysisPage() {
             : apiService.socket.getHistorical30mCandle(),
         ]);
 
-        if (!intradayRes?.data || !historicRes?.data) {
+        if (!intradayRes?.data && !historicRes?.data) {
           throw new Error("Failed to fetch analysis data");
         }
 
         setAnalysisData({
-          intraday: intradayRes.data,
-          historical: historicRes.data,
+          intraday: intradayRes?.data || null,
+          historical: historicRes?.data || null,
         });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unknown error occurred");

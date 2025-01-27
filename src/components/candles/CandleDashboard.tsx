@@ -19,47 +19,172 @@ interface MarketAnalysisProps {
 }
 
 export default function MarketAnalysisDashboard({ data }: MarketAnalysisProps) {
-  const [expandedSections] = useState({
-    intradayTrend: true,
-    intradaySignals: true,
-    historicalKeyLevels: false,
-  });
+  const renderAnalysisGrid = (
+    sectionData: any,
+    type: "intraday" | "historical"
+  ) => {
+    if (!sectionData) return null;
 
-  const renderAnalysisSection = (sectionData: any, isIntraday: boolean) => (
-    <Card className="p-6 mb-6 shadow-lg hover:shadow-xl transition-shadow">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold flex items-center gap-2">
-          {isIntraday ? (
-            <>
-              <span className="text-emerald-500">📈</span>
-              Real-time Intraday Analysis
-            </>
-          ) : (
-            <>
-              <span className="text-blue-500">📊</span>
-              Historical Analysis
-            </>
-          )}
-        </h3>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Clock className="w-4 h-4" />
-          {new Date().toLocaleString()}
-        </div>
-      </div>
+    const calculateCandleStrength = (priceStructure: any) => {
+      const { bodyStrength, rangeStrength, wickSignificance } = priceStructure;
+      return Math.min(
+        bodyStrength * 0.6 + rangeStrength * 0.3 + (1 - wickSignificance) * 0.1,
+        100
+      );
+    };
 
-      <CollapsibleSection title="📊 Trend & Strength Analysis" defaultOpen>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <TrendOverview data={sectionData} />
-          <StrengthAnalysis data={sectionData} />
-        </div>
-      </CollapsibleSection>
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {/* Header Section */}
+        <Card className="p-4 col-span-full">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              {type === "intraday" ? (
+                <>
+                  <span className="text-emerald-500">📈</span>
+                  Real-time Intraday Analysis
+                </>
+              ) : (
+                <>
+                  <span className="text-blue-500">📊</span>
+                  Historical Market Analysis
+                </>
+              )}
+            </h2>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Clock className="w-4 h-4" />
+              {new Date().toLocaleString()}
+            </div>
+          </div>
+        </Card>
 
-      <CollapsibleSection title="🔔 Signals & Breakouts" defaultOpen>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <SignalSection
-            signals={sectionData.analysisWithoutTrendlines.signals}
-          />
-          <div className="space-y-6">
+        {/* Trend & Strength Section */}
+        <Card className="p-4 col-span-full md:col-span-1 xl:col-span-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Trend Overview */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-bold">📊 Trend Analysis</h3>
+              <TrendIndicator
+                label="Market Trend"
+                value={
+                  sectionData.analysisWithoutTrendlines.marketStructure.trend
+                }
+                strength={
+                  sectionData.analysisWithoutTrendlines.marketStructure
+                    .trendStrength
+                }
+              />
+              <TrendIndicator
+                label="Primary Trend"
+                value={sectionData.trendLineAnalysis.trend.primary}
+                strength={sectionData.trendLineAnalysis.strength.avgStrength.support.toFixed(
+                  2
+                )}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <MetricValue
+                  label="Resistance Slope"
+                  value={sectionData.trendLineAnalysis.trend.slope.resistance?.toFixed(
+                    2
+                  )}
+                  delta={
+                    sectionData.trendLineAnalysis.strength.momentum.resistance *
+                    100
+                  }
+                />
+                <MetricValue
+                  label="Support Slope"
+                  value={sectionData.trendLineAnalysis.trend.slope.support?.toFixed(
+                    2
+                  )}
+                  delta={
+                    sectionData.trendLineAnalysis.strength.momentum.support *
+                    100
+                  }
+                />
+              </div>
+            </div>
+
+            {/* Strength Analysis */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-bold">💪 Market Strength</h3>
+              <StrengthMeter
+                label="Resistance"
+                touchpoints={
+                  sectionData.trendLineAnalysis.strength.touchpoints.resistance
+                }
+                avgStrength={
+                  sectionData.trendLineAnalysis.strength.avgStrength
+                    .resistance * 100
+                }
+                momentum={
+                  sectionData.trendLineAnalysis.strength.momentum.resistance *
+                  100
+                }
+              />
+              <StrengthMeter
+                label="Support"
+                touchpoints={
+                  sectionData.trendLineAnalysis.strength.touchpoints.support
+                }
+                avgStrength={
+                  sectionData.trendLineAnalysis.strength.avgStrength.support *
+                  100
+                }
+                momentum={
+                  sectionData.trendLineAnalysis.strength.momentum.support * 100
+                }
+              />
+              <TrendIndicator
+                label="Candle Strength"
+                value={
+                  sectionData.analysisWithoutTrendlines.technicalDetails
+                    .priceStructure.candleType
+                }
+                strength={`${calculateCandleStrength(
+                  sectionData.analysisWithoutTrendlines.technicalDetails
+                    .priceStructure
+                ).toFixed(1)}%`}
+              />
+            </div>
+          </div>
+        </Card>
+
+        {/* Signals & Breakouts */}
+        <Card className="p-4 col-span-full md:col-span-1">
+          <h3 className="text-lg font-bold mb-4">🚨 Market Signals</h3>
+          <div className="space-y-4">
+            <SignalGroup
+              title="Momentum Signals"
+              signals={
+                sectionData.analysisWithoutTrendlines.signals.momentumSignals
+              }
+            />
+            <SignalGroup
+              title="Pattern Signals"
+              signals={
+                sectionData.analysisWithoutTrendlines.signals.patternSignals
+              }
+            />
+            <SignalGroup
+              title="Swing Signals"
+              signals={
+                sectionData.analysisWithoutTrendlines.signals.swingPointSignals
+              }
+            />
+            <SignalGroup
+              title="Trendline Signals"
+              signals={
+                sectionData.analysisWithoutTrendlines.signals.trendlineSignals
+              }
+            />
+            <SignalGroup
+              title="Market Structure"
+              signals={
+                sectionData.analysisWithoutTrendlines.signals
+                  .marketStructureSignals
+              }
+            />
             <BreakoutAlerts
               breakouts={sectionData.analysisWithoutTrendlines.breakouts}
             />
@@ -68,133 +193,81 @@ export default function MarketAnalysisDashboard({ data }: MarketAnalysisProps) {
               signals={sectionData.trendLineAnalysis.earlySignals}
             />
           </div>
-        </div>
-      </CollapsibleSection>
+        </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <TechnicalInsights data={sectionData} />
-        <PredictionInsights
-          predictions={sectionData.trendLineAnalysis.prediction}
-        />
-        <MarketWarnings warnings={sectionData.trendLineAnalysis.warnings} />
-      </div>
+        {/* Key Levels & Patterns */}
+        <Card className="p-4 col-span-full md:col-span-1">
+          <h3 className="text-lg font-bold mb-4">🔑 Key Levels</h3>
+          <KeyLevels data={sectionData} />
+          <div className="mt-4">
+            <StrongLevels
+              levels={sectionData.trendLineAnalysis.strength.strongLevels}
+            />
+          </div>
+          <div className="mt-4">
+            <PatternPredictions
+              patterns={sectionData.trendLineAnalysis.prediction.patterns}
+            />
+          </div>
+          <div className="mt-4">
+            <MarketWarnings warnings={sectionData.trendLineAnalysis.warnings} />
+          </div>
+        </Card>
 
-      <CollapsibleSection title="🔮 Predictions" defaultOpen>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Technical Insights */}
+        <Card className="p-4 col-span-full md:col-span-1">
+          <h3 className="text-lg font-bold mb-4">📈 Technical Analysis</h3>
+          <TechnicalInsights data={sectionData} />
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            <SwingPoints
+              data={
+                sectionData.analysisWithoutTrendlines.technicalDetails
+                  .recentSwingPoints
+              }
+            />
+            <PatternAnalysis
+              patterns={
+                sectionData.analysisWithoutTrendlines.technicalDetails.patterns
+              }
+            />
+          </div>
+        </Card>
+
+        {/* Predictions & Warnings */}
+        <Card className="p-4 col-span-full md:col-span-1">
+          <h3 className="text-lg font-bold mb-4">🔮 Predictions</h3>
           <PredictionInsights
             predictions={sectionData.trendLineAnalysis.prediction}
           />
-          <PatternPredictions
-            patterns={sectionData.trendLineAnalysis.prediction.patterns}
-          />
-        </div>
-      </CollapsibleSection>
-
-      <CollapsibleSection title="🔑 Key Levels" defaultOpen>
-        <div className="space-y-6">
-          <KeyLevels data={sectionData} />
-          <StrongLevels
-            levels={sectionData.trendLineAnalysis.strength.strongLevels}
-          />
-        </div>
-      </CollapsibleSection>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <SwingPoints
-          data={
-            sectionData.analysisWithoutTrendlines.technicalDetails
-              .recentSwingPoints
-          }
-        />
-        <PatternAnalysis
-          patterns={
-            sectionData.analysisWithoutTrendlines.technicalDetails.patterns
-          }
-        />
+        </Card>
       </div>
-    </Card>
-  );
+    );
+  };
 
   return (
-    <div className="grid gap-4 p-4 h-auto">
-      {renderAnalysisSection(data.intraday, true)}
-      {renderAnalysisSection(data.historical, false)}
+    <div className="p-4 space-y-6">
+      {data.intraday && (
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold">📊 Live Intraday Analysis</h2>
+          {renderAnalysisGrid(data.intraday, "intraday")}
+        </div>
+      )}
+
+      {data.historical && (
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold">⏳ Historical Analysis</h2>
+          {renderAnalysisGrid(data.historical, "historical")}
+        </div>
+      )}
+
+      {!data.intraday && !data.historical && (
+        <div className="text-center p-8 text-muted-foreground">
+          No analysis data available
+        </div>
+      )}
     </div>
   );
 }
-
-// Helper Components
-const CollapsibleSection = ({ title, children, defaultOpen = true }: any) => (
-  <Collapsible defaultOpen={defaultOpen}>
-    <CollapsibleTrigger className="w-full">
-      <div className="flex items-center justify-between p-4 bg-muted/50 rounded-t-lg hover:bg-muted/70 transition-colors">
-        <h4 className="font-semibold text-lg">{title}</h4>
-        <ChevronDown className="w-5 h-5 transition-transform" />
-      </div>
-    </CollapsibleTrigger>
-    <CollapsibleContent className="border-x border-b rounded-b-lg p-4 bg-background">
-      {children}
-    </CollapsibleContent>
-  </Collapsible>
-);
-
-const TrendOverview = ({ data }: any) => {
-  const calculateCandleStrength = (priceStructure: any) => {
-    // Custom formula - adjust weights according to your needs
-    const { bodyStrength, rangeStrength, wickSignificance } = priceStructure;
-    return Math.min(
-      bodyStrength * 0.6 + // Give body strength highest weight
-        rangeStrength * 0.3 + // Range strength moderate weight
-        (1 - wickSignificance) * 0.1, // Lower wick significance is better
-      100
-    ); // Cap at 100%
-  };
-
-  const candleStrength = calculateCandleStrength(
-    data.analysisWithoutTrendlines.technicalDetails.priceStructure
-  );
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <TrendIndicator
-          label="Market Trend"
-          value={data.analysisWithoutTrendlines.marketStructure.trend}
-          strength={
-            data.analysisWithoutTrendlines.marketStructure.trendStrength
-          }
-        />
-        <TrendIndicator
-          label="Primary Trend"
-          value={data.trendLineAnalysis.trend.primary}
-          strength={data.trendLineAnalysis.strength.avgStrength.support.toFixed(
-            2
-          )}
-        />
-        <TrendIndicator
-          label="Candle Strength"
-          value={
-            data.analysisWithoutTrendlines.technicalDetails.priceStructure
-              .candleType
-          }
-          strength={`${candleStrength.toFixed(1)}%`}
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <MetricValue
-          label="Resistance Slope"
-          value={data.trendLineAnalysis.trend.slope.resistance?.toFixed(2)}
-          delta={data.trendLineAnalysis.strength.momentum.resistance * 100}
-        />
-        <MetricValue
-          label="Support Slope"
-          value={data.trendLineAnalysis.trend.slope.support?.toFixed(2)}
-          delta={data.trendLineAnalysis.strength.momentum.support * 100}
-        />
-      </div>
-    </div>
-  );
-};
 
 const TrendIndicator = ({ label, value, strength }: any) => (
   <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
@@ -210,23 +283,6 @@ const TrendIndicator = ({ label, value, strength }: any) => (
         {typeof strength === "string" ? strength : `Strength: ${strength}`}
       </div>
     </div>
-  </div>
-);
-
-const StrengthAnalysis = ({ data }: any) => (
-  <div className="space-y-6">
-    <StrengthMeter
-      label="Resistance"
-      touchpoints={data.trendLineAnalysis.strength.touchpoints.resistance}
-      avgStrength={data.trendLineAnalysis.strength.avgStrength.resistance * 100}
-      momentum={data.trendLineAnalysis.strength.momentum.resistance * 100}
-    />
-    <StrengthMeter
-      label="Support"
-      touchpoints={data.trendLineAnalysis.strength.touchpoints.support}
-      avgStrength={data.trendLineAnalysis.strength.avgStrength.support * 100}
-      momentum={data.trendLineAnalysis.strength.momentum.support * 100}
-    />
   </div>
 );
 
@@ -252,22 +308,6 @@ const ProgressIndicator = ({ label, value }: any) => (
       <span>{value.toFixed(1)}%</span>
     </div>
     <Progress value={value} className="h-2" />
-  </div>
-);
-
-const SignalSection = ({ signals }: any) => (
-  <div className="space-y-4">
-    <SignalGroup title="Momentum Signals" signals={signals.momentumSignals} />
-    <SignalGroup title="Pattern Signals" signals={signals.patternSignals} />
-    <SignalGroup
-      title="Swing Point Signals"
-      signals={signals.swingPointSignals}
-    />
-    <SignalGroup title="Trendline Signals" signals={signals.trendlineSignals} />
-    <SignalGroup
-      title="Market Structure"
-      signals={signals.marketStructureSignals}
-    />
   </div>
 );
 
@@ -461,7 +501,7 @@ const LevelPill = ({ type, price, testCount }: any) => (
         : "bg-rose-100 text-rose-800"
     }`}
   >
-    {price.toFixed(2)} ({testCount}x)
+    ₹{price.toFixed(2)} ({testCount}x)
   </span>
 );
 
@@ -482,7 +522,7 @@ const SwingPointIndicator = ({ type, price, timestamp, strength }: any) => (
         }`}
       />
       <div>
-        <div className="font-medium">${price.toFixed(2)}</div>
+        <div className="font-medium">₹{price.toFixed(2)}</div>
         <div className="text-sm text-muted-foreground">
           {new Date(timestamp).toLocaleTimeString()}
         </div>
@@ -541,7 +581,7 @@ const BreakoutAlert = ({ type, price, timestamp }: any) => (
       <div className="w-2 h-2 bg-purple-500 rounded-full" />
       <div>
         <div className="font-medium">{type}</div>
-        <div className="text-sm text-muted-foreground">${price}</div>
+        <div className="text-sm text-muted-foreground">₹{price}</div>
       </div>
     </div>
     <div className="text-sm text-muted-foreground">
@@ -592,7 +632,7 @@ const PatternGroup = ({ type, color, items }: any) => (
                 {pattern.reliability}
               </Badge>
               <span className="text-sm text-muted-foreground">
-                Target: +${pattern.targetDistance.toFixed(2)}
+                Target: +₹{pattern.targetDistance.toFixed(2)}
               </span>
             </div>
           </div>
@@ -625,7 +665,7 @@ const TrendlineSignals = ({ signals }: { signals: any[] }) => {
                 <div>
                   <div className="font-medium">{signal.type}</div>
                   <div className="text-sm text-muted-foreground">
-                    Triggered @ {signal.price.toFixed(2)}
+                    Triggered @ ₹{signal.price.toFixed(2)}
                   </div>
                 </div>
               </div>
@@ -684,7 +724,7 @@ const StrongLevels = ({
                   key={i}
                   className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 text-xs font-medium whitespace-nowrap"
                 >
-                  ${level.toFixed(2)}
+                  ₹{level.toFixed(2)}
                 </span>
               ))}
             </div>
@@ -707,7 +747,7 @@ const StrongLevels = ({
                   key={i}
                   className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-medium whitespace-nowrap"
                 >
-                  ${level.toFixed(2)}
+                  ₹{level.toFixed(2)}
                 </span>
               ))}
             </div>
@@ -717,3 +757,4 @@ const StrongLevels = ({
     </Collapsible>
   );
 };
+

@@ -33,7 +33,7 @@ interface Trader {
 
 const BulkBlockTradeInsights = () => {
   const [tradeType, setTradeType] = useState<"bulk" | "block">("block");
-  const [timeFrame, setTimeFrame] = useState("recent");
+  const [timeFrame, setTimeFrame] = useState("today");
   const [insights, setInsights] = useState<MarketData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

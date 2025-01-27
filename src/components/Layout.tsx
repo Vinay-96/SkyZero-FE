@@ -39,14 +39,17 @@ import { ErrorBoundary } from "./ErrorBoundary";
 
 const menuItems = [
   { name: "Home", icon: Home, path: "/dashboard" },
-  { name: "Heat Map", icon: ChartScatter, path: "/heat-map" },
   { name: "Option Flash", icon: Link, path: "/options/option-deeplytics" },
   {
     name: "Option Analytics",
     icon: ChartNoAxesCombined,
     path: "/options/options-dashboard",
   },
-  { name: "Technicals", icon: ChartCandlestick, path: "/candles/technical-dashboard" },
+  {
+    name: "Technicals",
+    icon: ChartCandlestick,
+    path: "/candles/technical-dashboard",
+  },
   { name: "Trades", icon: ChartPie, path: "/trades" },
   { name: "Reports", icon: FileText, path: "/reports" },
   { name: "Journals", icon: NotebookPen, path: "/reports" },

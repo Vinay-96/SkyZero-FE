@@ -419,7 +419,7 @@ const OptionsDashboard = ({ initialData }: OptionsDashboardProps) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
           <MetricItem
             label="Market Trend"
-            value={`${(data.summary.marketBias.confidence * 100).toFixed(
+            value={`${(data.summary.marketBias.confidence).toFixed(
               1
             )}% Confidence`}
             icon={<Activity className="h-4 w-4" />}
@@ -439,7 +439,7 @@ const OptionsDashboard = ({ initialData }: OptionsDashboardProps) => {
 
           <MetricItem
             label="Best Opportunity"
-            value={data.summary.bestOpportunity}
+            value={`Confidence ${data.summary.confidence} - ${data.summary.bestOpportunity}`}
             icon={<Signal className="h-4 w-4 text-green-500" />}
           />
         </div>
@@ -457,7 +457,7 @@ const OptionsDashboard = ({ initialData }: OptionsDashboardProps) => {
           <div className="space-y-4">
             <MetricItem
               label="Volatility Trend"
-              value={`${data.marketConditions.volatility}%`}
+              value={`${data.marketConditions.volatility.toFixed(2)}%`}
               icon={<Zap className="h-5 w-5 text-yellow-500" />}
               chart={
                 <ResponsiveContainer width={100} height={40}>
@@ -518,27 +518,19 @@ const OptionsDashboard = ({ initialData }: OptionsDashboardProps) => {
             </div>
             <div className="flex justify-between items-center px-2">
               <span className="text-sm text-gray-500 dark:text-gray-400">
-                Max Confidence
+                Volume Trend
               </span>
               <div className="flex items-center gap-2">
                 <div className="w-12 h-2 bg-green-100 rounded-full overflow-hidden dark:bg-green-900/50">
                   <div
                     className="h-full bg-green-500 dark:bg-green-400"
                     style={{
-                      width: `${Math.max(
-                        ...data.callSignals.map((s) =>
-                          parseFloat(s.confidence.score)
-                        )
-                      )}%`,
+                      width: `${data.marketConditions.pcrAnalysis.volumeTrend.callPercentage}%`,
                     }}
                   />
                 </div>
                 <span className="font-semibold text-green-700 dark:text-green-400">
-                  {Math.max(
-                    ...data.callSignals.map((s) =>
-                      parseFloat(s.confidence.score)
-                    )
-                  ).toFixed(1)}
+                  {data.marketConditions.pcrAnalysis.volumeTrend.callPercentage}
                   %
                 </span>
               </div>
@@ -604,28 +596,19 @@ const OptionsDashboard = ({ initialData }: OptionsDashboardProps) => {
             </div>
             <div className="flex justify-between items-center px-2">
               <span className="text-sm text-gray-500 dark:text-gray-400">
-                Max Confidence
+                Volume Trend
               </span>
               <div className="flex items-center gap-2">
                 <div className="w-12 h-2 bg-red-100 rounded-full overflow-hidden dark:bg-red-900/50">
                   <div
                     className="h-full bg-red-500 dark:bg-red-400"
                     style={{
-                      width: `${Math.max(
-                        ...data.putSignals.map((s) =>
-                          parseFloat(s.confidence.score)
-                        )
-                      )}%`,
+                      width: `${data.marketConditions.pcrAnalysis.volumeTrend.putPercentage}%`,
                     }}
                   />
                 </div>
                 <span className="font-semibold text-red-700 dark:text-red-400">
-                  {Math.max(
-                    ...data.putSignals.map((s) =>
-                      parseFloat(s.confidence.score)
-                    )
-                  ).toFixed(1)}
-                  %
+                  {data.marketConditions.pcrAnalysis.volumeTrend.putPercentage}%
                 </span>
               </div>
             </div>
@@ -753,38 +736,27 @@ const OptionsDashboard = ({ initialData }: OptionsDashboardProps) => {
               <AlertCircle className="h-4 w-4" /> Contrarian Signals
             </h3>
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div
-                  className={`w-2 h-2 rounded-full ${getConfidenceColor(
-                    data.marketConditions.pcrAnalysis.contrarian.confidence
-                      .score
-                  )}`}
-                />
-                <span className="text-sm font-medium dark:text-gray-200">
-                  {
-                    data.marketConditions.pcrAnalysis.contrarian.confidence
-                      .level
-                  }
-                </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">
-                  {
-                    data.marketConditions.pcrAnalysis.contrarian.confidence
-                      .score
-                  }
-                  %
-                </span>
-              </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                {
-                  data.marketConditions.pcrAnalysis.contrarian.sentiment
-                    .direction
-                }{" "}
+                <span className="font-medium text-blue-600 dark:text-blue-400">
+                  {
+                    data.marketConditions.pcrAnalysis.contrarian.sentiment
+                      .direction
+                  }
+                </span>{" "}
                 bias with{" "}
-                {
-                  data.marketConditions.pcrAnalysis.contrarian.sentiment
-                    .strength
-                }{" "}
-                pressure
+                <span className="font-medium text-orange-600 dark:text-orange-400">
+                  {
+                    data.marketConditions.pcrAnalysis.contrarian.sentiment
+                      .strength
+                  }
+                </span>{" "}
+                pressure -{" "}
+                <span className="font-medium text-teal-600 dark:text-teal-400">
+                  {
+                    data.marketConditions.pcrAnalysis.contrarian.sentiment
+                      .reasoning
+                  }
+                </span>
               </div>
             </div>
           </div>
