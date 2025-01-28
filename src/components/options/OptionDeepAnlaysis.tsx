@@ -388,7 +388,8 @@ export const DeepOptionsDashboard = ({
                 {data.marketBias.direction} BIAS
               </Badge>
               <span className="text-sm text-muted-foreground">
-                Strength: {data.marketBias.strength} | PCR Bias:{" "}
+                <strong>Strength:</strong> {data.marketBias.strength} |{" "}
+                <strong>PCR Bias:</strong>{" "}
                 <span
                   className={
                     data.marketBias.pcrBias.toLowerCase() === "bullish"
@@ -396,8 +397,10 @@ export const DeepOptionsDashboard = ({
                       : "text-red-500"
                   }
                 >
-                  {data.marketBias.pcrBias}
+                  {data.marketBias.pcrBias}{" "}
                 </span>
+                | <strong>PCR Significance:</strong>{" "}
+                {data.marketBias.pcrSignificance}
               </span>
             </div>
           </div>

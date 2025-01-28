@@ -1,7 +1,6 @@
-import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "../ui/progress";
-import { Card } from "../ui/card";
+import { Card, CardContent } from "../ui/card";
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -209,6 +208,30 @@ export default function MarketAnalysisDashboard({ data }: MarketAnalysisProps) {
               patterns={sectionData.trendLineAnalysis.prediction.patterns}
             />
           </div>
+          <Card className="mt-6 w-full max-w-lg mx-auto border rounded-xl p-4 bg-muted/20">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <h4 className="font-semibold text-lg text-gray-800">
+                  📈 Price Action
+                </h4>
+              </div>
+              <div className="grid grid-cols-1 gap-2">
+                {sectionData.analysisWithoutTrendlines.priceActionPatterns.map(
+                  (pattern, index) => (
+                    <div
+                      key={index}
+                      className="p-2 rounded-lg bg-background border flex items-start gap-2"
+                    >
+                      <span className="w-2.5 h-2.5 mt-1 rounded-full bg-blue-500"></span>
+                      <span className="text-sm text-muted-foreground">
+                        {pattern}
+                      </span>
+                    </div>
+                  )
+                )}
+              </div>
+            </CardContent>
+          </Card>
           <div className="mt-4">
             <MarketWarnings warnings={sectionData.trendLineAnalysis.warnings} />
           </div>
