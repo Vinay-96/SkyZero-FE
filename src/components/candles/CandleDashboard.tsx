@@ -7,9 +7,9 @@ import {
   CollapsibleContent,
 } from "../ui/collapsible";
 import { ChevronDown, Clock } from "lucide-react";
+import moment from "moment-timezone";
 
 interface AnalysisData {
-  intraday: any;
   historical: any;
 }
 
@@ -18,10 +18,7 @@ interface MarketAnalysisProps {
 }
 
 export default function MarketAnalysisDashboard({ data }: MarketAnalysisProps) {
-  const renderAnalysisGrid = (
-    sectionData: any,
-    type: "intraday" | "historical"
-  ) => {
+  const renderAnalysisGrid = (sectionData: any) => {
     if (!sectionData) return null;
 
     const calculateCandleStrength = (priceStructure: any) => {
@@ -38,21 +35,15 @@ export default function MarketAnalysisDashboard({ data }: MarketAnalysisProps) {
         <Card className="p-4 col-span-full">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold flex items-center gap-2">
-              {type === "intraday" ? (
-                <>
-                  <span className="text-emerald-500">📈</span>
-                  Real-time Intraday Analysis
-                </>
-              ) : (
-                <>
-                  <span className="text-blue-500">📊</span>
-                  Historical Market Analysis
-                </>
-              )}
+              <span className="text-blue-500">📈</span>
+              Real-time Historical Market Analysis
             </h2>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="w-4 h-4" />
-              {new Date().toLocaleString()}
+              {moment
+                .utc(sectionData.timestamp)
+                .tz("Asia/Kolkata")
+                .format("DD/MM/YYYY, hh:mm:ss A")}
             </div>
           </div>
         </Card>
@@ -269,21 +260,14 @@ export default function MarketAnalysisDashboard({ data }: MarketAnalysisProps) {
 
   return (
     <div className="p-4 space-y-6">
-      {data.intraday && (
-        <div className="space-y-4">
-          <h2 className="text-2xl font-bold">📊 Live Intraday Analysis</h2>
-          {renderAnalysisGrid(data.intraday, "intraday")}
-        </div>
-      )}
-
       {data.historical && (
         <div className="space-y-4">
-          <h2 className="text-2xl font-bold">⏳ Historical Analysis</h2>
+          <h2 className="text-2xl font-bold">⏳ Live Historical Analysis</h2>
           {renderAnalysisGrid(data.historical, "historical")}
         </div>
       )}
 
-      {!data.intraday && !data.historical && (
+      {!data.historical && (
         <div className="text-center p-8 text-muted-foreground">
           No analysis data available
         </div>

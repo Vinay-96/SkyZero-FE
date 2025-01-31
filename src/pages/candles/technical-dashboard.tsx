@@ -9,12 +9,33 @@ import { useAuthStore } from "@/lib/zustand/store";
 import { apiService } from "@/lib/api/services/api.service";
 
 interface AnalysisData {
-  intraday: any;
   historical: any;
 }
 
+// API method mapping
+const TIMEFRAME_API_METHODS = {
+  "1m": apiService.socket.getHistorical1mCandle,
+  "5m": apiService.socket.getHistorical5mCandle,
+  "10m": apiService.socket.getHistorical10mCandle,
+  "15m": apiService.socket.getHistorical15mCandle,
+  "30m": apiService.socket.getHistorical30mCandle,
+  "60m": apiService.socket.getHistorical60mCandle,
+};
+
+// Socket event mapping
+const TIMEFRAME_SOCKET_EVENTS = {
+  "1m": "historical-candle-analysis-1m",
+  "5m": "historical-candle-analysis-5m",
+  "10m": "historical-candle-analysis-10m",
+  "15m": "historical-candle-analysis-15m",
+  "30m": "historical-candle-analysis-30m",
+  "60m": "historical-candle-analysis-60m",
+};
+
 export default function AnalysisPage() {
-  const [timeframe, setTimeframe] = useState<"1m" | "30m">("1m");
+  const [timeframe, setTimeframe] = useState<
+    "1m" | "5m" | "10m" | "15m" | "30m" | "60m"
+  >("1m");
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,23 +45,14 @@ export default function AnalysisPage() {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [intradayRes, historicRes] = await Promise.all([
-          timeframe === "1m"
-            ? apiService.socket.getIntraday1mCandle()
-            : apiService.socket.getIntraday30mCandle(),
-          timeframe === "1m"
-            ? apiService.socket.getHistorical1mCandle()
-            : apiService.socket.getHistorical30mCandle(),
-        ]);
+        const apiMethod = TIMEFRAME_API_METHODS[timeframe];
+        const historicRes = await apiMethod();
 
-        if (!intradayRes?.data && !historicRes?.data) {
+        if (!historicRes?.data) {
           throw new Error("Failed to fetch analysis data");
         }
 
-        setAnalysisData({
-          intraday: intradayRes?.data || null,
-          historical: historicRes?.data || null,
-        });
+        setAnalysisData({ historical: historicRes.data });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Unknown error occurred");
       } finally {
@@ -55,44 +67,22 @@ export default function AnalysisPage() {
   useEffect(() => {
     if (!token) return;
 
-    let intradayEvent: string;
-    let historicalEvent: string;
-    let handleIntradayData: (data: any) => void;
-    let handleHistoricalData: (data: any) => void;
+    let currentEvent: string;
+    let handler: ((data: any) => void) | null = null;
 
     const connectSocket = async () => {
       try {
         await socketService.connect(token);
 
-        // Determine events based on timeframe
-        intradayEvent =
-          timeframe === "1m"
-            ? "intraday-candle-analysis"
-            : "intraday-candle-analysis-30";
-
-        historicalEvent =
-          timeframe === "1m"
-            ? "historical-candle-analysis"
-            : "historical-candle-analysis-30";
-
-        // Setup handlers
-        handleIntradayData = (newData: any) => {
+        currentEvent = TIMEFRAME_SOCKET_EVENTS[timeframe];
+        handler = (newData: any) => {
           setAnalysisData((prev) => ({
-            ...(prev || { intraday: null, historical: null }),
-            intraday: newData,
-          }));
-        };
-
-        handleHistoricalData = (newData: any) => {
-          setAnalysisData((prev) => ({
-            ...(prev || { intraday: null, historical: null }),
+            ...(prev || { historical: null }),
             historical: newData,
           }));
         };
 
-        // Subscribe to events
-        socketService.subscribe(intradayEvent, handleIntradayData);
-        socketService.subscribe(historicalEvent, handleHistoricalData);
+        socketService.subscribe(currentEvent, handler);
       } catch (err) {
         console.error("Socket connection error:", err);
       }
@@ -101,18 +91,16 @@ export default function AnalysisPage() {
     connectSocket();
 
     return () => {
-      // Cleanup subscriptions
-      if (intradayEvent && handleIntradayData) {
-        socketService.unsubscribe(intradayEvent, handleIntradayData);
-      }
-      if (historicalEvent && handleHistoricalData) {
-        socketService.unsubscribe(historicalEvent, handleHistoricalData);
+      if (handler && currentEvent) {
+        socketService.unsubscribe(currentEvent, handler);
       }
       socketService.disconnect();
     };
   }, [token, timeframe]);
 
-  const handleTimeframeChange = (newTimeframe: "1m" | "30m") => {
+  const handleTimeframeChange = (
+    newTimeframe: "1m" | "5m" | "10m" | "15m" | "30m" | "60m"
+  ) => {
     if (newTimeframe !== timeframe) {
       setIsLoading(true);
       setTimeframe(newTimeframe);
@@ -159,10 +147,34 @@ export default function AnalysisPage() {
             1 Minute Analysis
           </Button>
           <Button
+            variant={timeframe === "5m" ? "default" : "outline"}
+            onClick={() => handleTimeframeChange("5m")}
+          >
+            5 Minute Analysis
+          </Button>
+          <Button
+            variant={timeframe === "10m" ? "default" : "outline"}
+            onClick={() => handleTimeframeChange("10m")}
+          >
+            10 Minute Analysis
+          </Button>
+          <Button
+            variant={timeframe === "15m" ? "default" : "outline"}
+            onClick={() => handleTimeframeChange("15m")}
+          >
+            15 Minute Analysis
+          </Button>
+          <Button
             variant={timeframe === "30m" ? "default" : "outline"}
             onClick={() => handleTimeframeChange("30m")}
           >
             30 Minute Analysis
+          </Button>
+          <Button
+            variant={timeframe === "60m" ? "default" : "outline"}
+            onClick={() => handleTimeframeChange("60m")}
+          >
+            60 Minute Analysis
           </Button>
         </div>
 

@@ -20,6 +20,12 @@ export const apiService = {
       api.post<{ user: User }>(API_ENDPOINTS.AUTH.REGISTER, data),
 
     getProfile: async () => api.get<User>(API_ENDPOINTS.AUTH.PROFILE),
+
+    xtreamLogin: async (credentials: LoginCredentials) =>
+      api.post<{ user: User; token: string }>(
+        API_ENDPOINTS.AUTH.XTREAM_LOGIN,
+        credentials
+      ),
   },
 
   // User services
@@ -162,28 +168,6 @@ export const apiService = {
       );
       return response.data;
     },
-    getIntraday1mCandle: async () => {
-      const response = await api.get(
-        `${API_ENDPOINTS.SOCKET.INTRADAY_1M_CANDLE}`,
-        {
-          headers: {
-            Authorization: `Bearer ${useAuthStore.getState().token}`,
-          },
-        }
-      );
-      return response.data;
-    },
-    getIntraday30mCandle: async () => {
-      const response = await api.get(
-        `${API_ENDPOINTS.SOCKET.INTRADAY_30M_CANDLE}`,
-        {
-          headers: {
-            Authorization: `Bearer ${useAuthStore.getState().token}`,
-          },
-        }
-      );
-      return response.data;
-    },
     getHistorical1mCandle: async () => {
       const response = await api.get(
         `${API_ENDPOINTS.SOCKET.HISTORICAL_1M_CANDLE}`,
@@ -195,9 +179,53 @@ export const apiService = {
       );
       return response.data;
     },
+    getHistorical5mCandle: async () => {
+      const response = await api.get(
+        `${API_ENDPOINTS.SOCKET.HISTORICAL_5M_CANDLE}`,
+        {
+          headers: {
+            Authorization: `Bearer ${useAuthStore.getState().token}`,
+          },
+        }
+      );
+      return response.data;
+    },
+    getHistorical10mCandle: async () => {
+      const response = await api.get(
+        `${API_ENDPOINTS.SOCKET.HISTORICAL_10M_CANDLE}`,
+        {
+          headers: {
+            Authorization: `Bearer ${useAuthStore.getState().token}`,
+          },
+        }
+      );
+      return response.data;
+    },
+    getHistorical15mCandle: async () => {
+      const response = await api.get(
+        `${API_ENDPOINTS.SOCKET.HISTORICAL_15M_CANDLE}`,
+        {
+          headers: {
+            Authorization: `Bearer ${useAuthStore.getState().token}`,
+          },
+        }
+      );
+      return response.data;
+    },
     getHistorical30mCandle: async () => {
       const response = await api.get(
         `${API_ENDPOINTS.SOCKET.HISTORICAL_30M_CANDLE}`,
+        {
+          headers: {
+            Authorization: `Bearer ${useAuthStore.getState().token}`,
+          },
+        }
+      );
+      return response.data;
+    },
+    getHistorical60mCandle: async () => {
+      const response = await api.get(
+        `${API_ENDPOINTS.SOCKET.HISTORICAL_60M_CANDLE}`,
         {
           headers: {
             Authorization: `Bearer ${useAuthStore.getState().token}`,

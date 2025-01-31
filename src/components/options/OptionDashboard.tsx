@@ -28,6 +28,7 @@ import { Skeleton } from "../ui/skeleton";
 import { useToast } from "../../hooks/use-toast";
 import { socketService } from "@/lib/socket";
 import { useAuthStore } from "@/lib/zustand/store";
+import moment from "moment-timezone";
 
 // Type definitions
 interface Greeks {
@@ -407,11 +408,10 @@ const OptionsDashboard = ({ initialData }: OptionsDashboardProps) => {
           <div className="flex items-center gap-2">
             <BarChart className="h-6 w-6 text-blue-500 dark:text-blue-400" />
             <span className="text-sm text-muted-foreground">
-              Last Updated:{" "}
-              {new Date(data.timestamp).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              {moment
+                .utc(data.timestamp)
+                .tz("Asia/Kolkata")
+                .format("DD/MM/YYYY, hh:mm:ss A")}
             </span>
           </div>
         </div>
@@ -419,7 +419,7 @@ const OptionsDashboard = ({ initialData }: OptionsDashboardProps) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
           <MetricItem
             label="Market Trend"
-            value={`${(data.summary.marketBias.confidence).toFixed(
+            value={`${data.summary.marketBias.confidence.toFixed(
               1
             )}% Confidence`}
             icon={<Activity className="h-4 w-4" />}

@@ -7,6 +7,7 @@ export const API_ENDPOINTS = {
     REGISTER: "/auth/register",
     LOGOUT: "/auth/logout",
     PROFILE: "/auth/profile",
+    XTREAM_LOGIN: "/auth/x-tream",
   },
   // User endpoints
   USER: {
@@ -58,10 +59,12 @@ export const API_ENDPOINTS = {
   SOCKET: {
     OPTION_ANALYTICS: `${API_VERSION}/socket/option-analytics`,
     OPTION_DEEPLYTICS: `${API_VERSION}/socket/option-deeplytics`,
-    INTRADAY_1M_CANDLE: `${API_VERSION}/socket/intraday-1m-candle`,
-    HISTORICAL_30M_CANDLE: `${API_VERSION}/socket/intraday-30m-candle`,
     HISTORICAL_1M_CANDLE: `${API_VERSION}/socket/historic-1m-candle`,
-    INTRADAY_30M_CANDLE: `${API_VERSION}/socket/historic-30m-candle`,
+    HISTORICAL_5M_CANDLE: `${API_VERSION}/socket/historic-5m-candle`,
+    HISTORICAL_10M_CANDLE: `${API_VERSION}/socket/historic-10m-candle`,
+    HISTORICAL_15M_CANDLE: `${API_VERSION}/socket/historic-15m-candle`,
+    HISTORICAL_30M_CANDLE: `${API_VERSION}/socket/historic-30m-candle`,
+    HISTORICAL_60M_CANDLE: `${API_VERSION}/socket/historic-60m-candle`,
   },
 } as const;
 

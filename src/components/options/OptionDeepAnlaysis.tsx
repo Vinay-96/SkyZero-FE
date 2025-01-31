@@ -2,12 +2,10 @@ import { useState, useEffect, useCallback, memo } from "react";
 import { cn } from "@/lib/utils";
 import {
   ArrowUp,
-  ArrowDown,
   Sigma,
   Clock,
   AlertCircle,
   Zap,
-  Scale,
   TrendingUp,
   TrendingDown,
   BarChart,
@@ -20,6 +18,8 @@ import { useAuthStore } from "@/lib/zustand/store";
 import { socketService } from "@/lib/socket";
 import { Skeleton } from "../ui/skeleton";
 import { useToast } from "../../../src/hooks/use-toast";
+import moment from "moment-timezone";
+
 
 // Type definitions
 interface Greeks {
@@ -410,11 +410,10 @@ export const DeepOptionsDashboard = ({
               aria-hidden
             />
             <span className="text-sm text-muted-foreground">
-              Last Updated:{" "}
-              {new Date(data.calls[0].timestamp).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              {moment
+                .utc(data.timestamp)
+                .tz("Asia/Kolkata")
+                .format("DD/MM/YYYY, hh:mm:ss A")}{" "}
             </span>
           </div>
         </div>
