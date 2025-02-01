@@ -20,6 +20,7 @@ const TIMEFRAME_API_METHODS = {
   "15m": apiService.socket.getHistorical15mCandle,
   "30m": apiService.socket.getHistorical30mCandle,
   "60m": apiService.socket.getHistorical60mCandle,
+  "1d": apiService.socket.getHistorical1dCandle,
 };
 
 // Socket event mapping
@@ -30,11 +31,12 @@ const TIMEFRAME_SOCKET_EVENTS = {
   "15m": "historical-candle-analysis-15m",
   "30m": "historical-candle-analysis-30m",
   "60m": "historical-candle-analysis-60m",
+  "1d": "historical-candle-analysis-1d",
 };
 
 export default function AnalysisPage() {
   const [timeframe, setTimeframe] = useState<
-    "1m" | "5m" | "10m" | "15m" | "30m" | "60m"
+    "1m" | "5m" | "10m" | "15m" | "30m" | "60m" | "1d"
   >("1m");
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -99,7 +101,7 @@ export default function AnalysisPage() {
   }, [token, timeframe]);
 
   const handleTimeframeChange = (
-    newTimeframe: "1m" | "5m" | "10m" | "15m" | "30m" | "60m"
+    newTimeframe: "1m" | "5m" | "10m" | "15m" | "30m" | "60m" | "1d"
   ) => {
     if (newTimeframe !== timeframe) {
       setIsLoading(true);
@@ -175,6 +177,12 @@ export default function AnalysisPage() {
             onClick={() => handleTimeframeChange("60m")}
           >
             60 Minute Analysis
+          </Button>
+          <Button
+            variant={timeframe === "1d" ? "default" : "outline"}
+            onClick={() => handleTimeframeChange("1d")}
+          >
+            1 Day Analysis
           </Button>
         </div>
 

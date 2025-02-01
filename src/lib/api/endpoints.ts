@@ -65,6 +65,7 @@ export const API_ENDPOINTS = {
     HISTORICAL_15M_CANDLE: `${API_VERSION}/socket/historic-15m-candle`,
     HISTORICAL_30M_CANDLE: `${API_VERSION}/socket/historic-30m-candle`,
     HISTORICAL_60M_CANDLE: `${API_VERSION}/socket/historic-60m-candle`,
+    HISTORICAL_1D_CANDLE: `${API_VERSION}/socket/historic-1d-candle`,
   },
 } as const;
 

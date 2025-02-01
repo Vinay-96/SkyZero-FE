@@ -234,6 +234,17 @@ export const apiService = {
       );
       return response.data;
     },
+    getHistorical1dCandle: async () => {
+      const response = await api.get(
+        `${API_ENDPOINTS.SOCKET.HISTORICAL_1D_CANDLE}`,
+        {
+          headers: {
+            Authorization: `Bearer ${useAuthStore.getState().token}`,
+          },
+        }
+      );
+      return response.data;
+    },
   },
 };
 

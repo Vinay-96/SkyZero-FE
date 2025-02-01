@@ -531,7 +531,10 @@ const SwingPointIndicator = ({ type, price, timestamp, strength }: any) => (
       <div>
         <div className="font-medium">₹{price.toFixed(2)}</div>
         <div className="text-sm text-muted-foreground">
-          {new Date(timestamp).toLocaleTimeString()}
+          {new Date(timestamp).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
         </div>
       </div>
     </div>
@@ -592,7 +595,10 @@ const BreakoutAlert = ({ type, price, timestamp }: any) => (
       </div>
     </div>
     <div className="text-sm text-muted-foreground">
-      {new Date(timestamp).toLocaleTimeString()}
+      {new Date(timestamp).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}
     </div>
   </div>
 );
