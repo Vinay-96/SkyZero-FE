@@ -90,7 +90,6 @@ export const apiService = {
       const response = await api.get(
         `${API_ENDPOINTS.INSIDERTRADES.DETECT_MOVEMENTS}/${params}?timeframe=${timeFrame}`
       );
-      console.log(response);
       return response.data;
     },
     getAnalytics: async (timeFrame: string, params: string) => {
@@ -125,7 +124,6 @@ export const apiService = {
       const response = await api.get(
         `${API_ENDPOINTS.SASTTRADES.RECOMMENDATION}/${params}?timeframe=${timeFrame}`
       );
-      console.log(response);
       return response.data;
     },
     getTopTransactions: async (timeFrame: string, params: string) => {
@@ -237,6 +235,17 @@ export const apiService = {
     getHistorical1dCandle: async () => {
       const response = await api.get(
         `${API_ENDPOINTS.SOCKET.HISTORICAL_1D_CANDLE}`,
+        {
+          headers: {
+            Authorization: `Bearer ${useAuthStore.getState().token}`,
+          },
+        }
+      );
+      return response.data;
+    },
+    getRecentOptionContrarianSignals: async () => {
+      const response = await api.get(
+        `${API_ENDPOINTS.SOCKET.OPTION_CONTRARIAN}`,
         {
           headers: {
             Authorization: `Bearer ${useAuthStore.getState().token}`,

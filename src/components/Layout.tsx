@@ -11,12 +11,12 @@ import {
   Settings,
   LogOut,
   User,
-  Link,
+  Zap,
+  Siren,
   ChartCandlestick,
   ChartPie,
   ChartNoAxesCombined,
   NotebookPen,
-  ChartScatter,
   ChevronDown,
 } from "lucide-react";
 import {
@@ -39,7 +39,8 @@ import { ErrorBoundary } from "./ErrorBoundary";
 
 const menuItems = [
   { name: "Home", icon: Home, path: "/dashboard" },
-  { name: "Option Flash", icon: Link, path: "/options/option-deeplytics" },
+  { name: "Option Flash", icon: Zap, path: "/options/option-deeplytics" },
+  { name: "Option Signals", icon: Siren, path: "/options/option-contrarian" },
   {
     name: "Option Analytics",
     icon: ChartNoAxesCombined,

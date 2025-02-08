@@ -134,7 +134,7 @@ export default function RegisterForm() {
               <FormItem>
                 <FormLabel>Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="John Doe" {...field} />
+                  <Input placeholder="Ashok kumar" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -147,7 +147,7 @@ export default function RegisterForm() {
               <FormItem>
                 <FormLabel>Username</FormLabel>
                 <FormControl>
-                  <Input placeholder="johndoe123" {...field} />
+                  <Input placeholder="ashok98" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -195,7 +195,7 @@ export default function RegisterForm() {
               <FormItem>
                 <FormLabel>Phone Number</FormLabel>
                 <FormControl>
-                  <Input placeholder="+1 234 567 890" {...field} />
+                  <Input placeholder="+91 94463 86942" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -208,7 +208,7 @@ export default function RegisterForm() {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="john@example.com" {...field} />
+                  <Input placeholder="ashok@example.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

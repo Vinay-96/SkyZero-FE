@@ -59,6 +59,7 @@ export const API_ENDPOINTS = {
   SOCKET: {
     OPTION_ANALYTICS: `${API_VERSION}/socket/option-analytics`,
     OPTION_DEEPLYTICS: `${API_VERSION}/socket/option-deeplytics`,
+    OPTION_CONTRARIAN: `${API_VERSION}/socket/option-contrarian-signals`,
     HISTORICAL_1M_CANDLE: `${API_VERSION}/socket/historic-1m-candle`,
     HISTORICAL_5M_CANDLE: `${API_VERSION}/socket/historic-5m-candle`,
     HISTORICAL_10M_CANDLE: `${API_VERSION}/socket/historic-10m-candle`,
