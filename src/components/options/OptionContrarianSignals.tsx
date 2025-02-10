@@ -42,17 +42,26 @@ interface SignalsUIProps {
 
 function SignalCard({ signal }: { signal: Signal }) {
   return (
-    <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow">
+    <Card
+      className={`bg-white/90 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-shadow 
+      ${
+        signal.type === "CALL"
+          ? "border-l-4 border-green-500"
+          : "border-l-4 border-red-500"
+      }`}
+    >
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <div>
           <CardTitle className="text-lg font-bold text-gray-800">
-            <span
-              className={`mr-2 ${
-                signal.type === "Call" ? "text-green-600" : "text-red-600"
-              }`}
+            <Badge
+              className={
+                signal.type === "CALL"
+                  ? "bg-green-100 text-green-800 hover:bg-green-200 mr-2"
+                  : "bg-red-100 text-red-800 hover:bg-red-200 mr-2"
+              }
             >
               {signal.type}
-            </span>
+            </Badge>
             <span className="text-blue-600">{signal.action}</span> -
             <span className="text-purple-600 ml-1">₹{signal.strikePrice}</span>
           </CardTitle>
@@ -123,8 +132,9 @@ function SignalCard({ signal }: { signal: Signal }) {
 
 export default function SignalsUI({ data }: SignalsUIProps) {
   // Calculate the number of Call and Put signals
-  const callCount = data.signals.filter((signal) => signal.type === "CALL").length;
-  const putCount = data.signals.filter((signal) => signal.type === "PUT").length;
+  const calls = data.signals.filter((signal) => signal.type === "CALL");
+  const puts = data.signals.filter((signal) => signal.type === "PUT");
+  const marketDate = new Date(data.timestamp);
 
   return (
     <div className="container mx-auto p-4 md:p-6">
@@ -135,7 +145,7 @@ export default function SignalsUI({ data }: SignalsUIProps) {
             Market Overview
           </CardTitle>
           <div className="text-sm text-gray-500 mt-1">
-            {format(new Date(data.timestamp), "MMM dd, yyyy hh:mm a")}
+            {format(marketDate, "MMM dd, yyyy hh:mm a")}
           </div>
         </CardHeader>
         <CardContent>
@@ -160,7 +170,7 @@ export default function SignalsUI({ data }: SignalsUIProps) {
               <div className="bg-white p-3 rounded-lg shadow-sm">
                 <span className="text-sm text-gray-600">Call / Put Ratio</span>
                 <div className="text-2xl font-bold text-indigo-600">
-                  {callCount} / {putCount}
+                  {calls.length} / {puts.length}
                 </div>
               </div>
             </div>
@@ -168,12 +178,40 @@ export default function SignalsUI({ data }: SignalsUIProps) {
         </CardContent>
       </Card>
 
-      {/* Signal Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {data.signals.map((signal, idx) => (
-          <SignalCard key={idx} signal={signal} />
-        ))}
-      </div>
+      {/* Call Signals Section */}
+      {calls.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center mb-4">
+            <h2 className="text-2xl font-bold text-green-600 mr-3">
+              Call Signals ({calls.length})
+            </h2>
+            <div className="h-px flex-1 bg-gradient-to-r from-green-100 to-transparent" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {calls.map((signal, idx) => (
+              <SignalCard key={idx} signal={signal} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Put Signals Section */}
+      {puts.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center mb-4">
+            <h2 className="text-2xl font-bold text-red-600 mr-3">
+              Put Signals ({puts.length})
+            </h2>
+            <div className="h-px flex-1 bg-gradient-to-r from-red-100 to-transparent" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {puts.map((signal, idx) => (
+              <SignalCard key={idx} signal={signal} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
