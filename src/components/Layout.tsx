@@ -7,17 +7,18 @@ import {
   ChevronLeft,
   ChevronRight,
   Home,
-  FileText,
   Settings,
   LogOut,
   User,
   Zap,
   Siren,
   ChartCandlestick,
-  ChartPie,
-  ChartNoAxesCombined,
-  NotebookPen,
   ChevronDown,
+  Blocks,
+  UserSearch,
+  ArrowRightLeft,
+  Folder,
+  FolderOpen,
 } from "lucide-react";
 import {
   Tooltip,
@@ -37,23 +38,101 @@ import { useEffect, useState } from "react";
 import { ThemeToggle } from "./ThemeToggle";
 import { ErrorBoundary } from "./ErrorBoundary";
 
-const menuItems = [
-  { name: "Home", icon: Home, path: "/dashboard" },
-  { name: "Option Flash", icon: Zap, path: "/options/option-deeplytics" },
-  { name: "Option Signals", icon: Siren, path: "/options/option-contrarian" },
+type MenuGroup = {
+  title: string;
+  items: {
+    name: string;
+    icon: any;
+    path: string;
+  }[];
+};
+
+const menuGroups: MenuGroup[] = [
   {
-    name: "Option Analytics",
-    icon: ChartNoAxesCombined,
-    path: "/options/options-dashboard",
+    title: "Bulk Block Trades",
+    items: [
+      { name: "Trades", icon: Blocks, path: "/deals/bulk-block/trades" },
+      {
+        name: "Trade Details",
+        icon: Blocks,
+        path: "/deals/bulk-block/trade-details",
+      },
+    ],
   },
   {
-    name: "Technicals",
-    icon: ChartCandlestick,
-    path: "/candles/technical-dashboard",
+    title: "Insider Activity",
+    items: [
+      {
+        name: "Trades",
+        icon: UserSearch,
+        path: "/deals/insider/insider-trades",
+      },
+      {
+        name: "Insights",
+        icon: UserSearch,
+        path: "/deals/insider/insider-insights",
+      },
+      {
+        name: "Movements",
+        icon: UserSearch,
+        path: "/deals/insider/insider-movements",
+      },
+      {
+        name: "Transactions",
+        icon: UserSearch,
+        path: "/deals/insider/insider-transactions",
+      },
+    ],
   },
-  { name: "Trades", icon: ChartPie, path: "/trades" },
-  { name: "Reports", icon: FileText, path: "/reports" },
-  { name: "Journals", icon: NotebookPen, path: "/reports" },
+  {
+    title: "SAST Analytics",
+    items: [
+      { name: "Trades", icon: ArrowRightLeft, path: "/deals/sast/sast-trades" },
+      {
+        name: "Top Transactions",
+        icon: ArrowRightLeft,
+        path: "/deals/sast/sast-top-transaction",
+      },
+      {
+        name: "Analytics",
+        icon: ArrowRightLeft,
+        path: "/deals/sast/sast-analysis",
+      },
+      {
+        name: "High Probability Trades",
+        icon: ArrowRightLeft,
+        path: "/deals/sast/sast-high-prob-trades",
+      },
+      {
+        name: "Recommendations",
+        icon: ArrowRightLeft,
+        path: "/deals/sast/sast-recommendation",
+      },
+    ],
+  },
+  {
+    title: "Options",
+    items: [
+      { name: "Option Flash", icon: Zap, path: "/options/option-deeplytics" },
+      { name: "Signals", icon: Siren, path: "/options/option-contrarian" },
+      { name: "Option Overview", icon: Siren, path: "/options/options-dashboard" },
+    ],
+  },
+  {
+    title: "Technicals",
+    items: [
+      {
+        name: "Dashboard",
+        icon: ChartCandlestick,
+        path: "/candles/technical-dashboard",
+      },
+      {
+        name: "Health",
+        icon: ChartCandlestick,
+        path: "/health",
+      },
+    ],
+  },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -62,6 +141,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
+
+  const toggleGroup = (title: string) => {
+    const newOpenGroups = new Set(openGroups);
+    newOpenGroups.has(title)
+      ? newOpenGroups.delete(title)
+      : newOpenGroups.add(title);
+    setOpenGroups(newOpenGroups);
+  };
 
   const handleLogout = () => {
     socketService.disconnect();
@@ -91,7 +179,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden fixed top-4 left-4 z-50"
+          className="md:hidden fixed top-4 left-4 z-50 backdrop-blur-sm"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
           {isMobileMenuOpen ? (
@@ -105,7 +193,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {/* Sidebar */}
         <aside
           className={cn(
-            "fixed h-full bg-background border-r shadow-sm z-40",
+            "fixed h-full bg-background/95 border-r shadow-sm z-40 backdrop-blur-lg",
             "transition-[transform,width] duration-300 ease-in-out",
             isMobile
               ? `w-64 ${
@@ -119,13 +207,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         >
           <div className="h-16 flex items-center justify-between px-4 border-b">
             {(!isCollapsed || isMobile) && (
-              <h1 className="text-xl font-bold tracking-tight">Sky⚡Zero</h1>
+              <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                SkyZero
+              </h1>
             )}
             {!isMobile && (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsCollapsed(!isCollapsed)}
+                className="hover:bg-accent/50"
               >
                 {isCollapsed ? (
                   <ChevronRight className="h-5 w-5" />
@@ -138,79 +229,89 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
 
           <nav className="mt-4 flex flex-col h-[calc(100%-4rem)] justify-between overflow-y-auto">
-            <div>
-              {menuItems.map((item) => (
-                <Tooltip key={item.name} delayDuration={0}>
-                  <TooltipTrigger asChild>
+            <div className="space-y-1 px-2">
+              {menuGroups.map((group) => (
+                <div key={group.title}>
+                  {(!isCollapsed || isMobile) && (
                     <Button
-                      variant={isActivePath(item.path) ? "secondary" : "ghost"}
-                      className={cn(
-                        "w-full justify-start h-12 rounded-none",
-                        "transition-colors duration-200",
-                        !isCollapsed && "px-4",
-                        isActivePath(item.path) &&
-                          "bg-accent text-accent-foreground"
-                      )}
-                      onClick={() => {
-                        router.push(item.path);
-                        isMobile && setIsMobileMenuOpen(false);
-                      }}
+                      variant="ghost"
+                      className="w-full justify-between h-10 px-3 font-medium text-sm"
+                      onClick={() => toggleGroup(group.title)}
                     >
-                      <item.icon className="h-5 w-5 shrink-0" />
-                      {(!isCollapsed || isMobile) && (
-                        <span className="ml-4 truncate">{item.name}</span>
+                      <span className="truncate">{group.title}</span>
+                      {openGroups.has(group.title) ? (
+                        <ChevronLeft className="h-4 w-4 ml-2 rotate-90" />
+                      ) : (
+                        <ChevronLeft className="h-4 w-4 ml-2 -rotate-90" />
                       )}
                     </Button>
-                  </TooltipTrigger>
-                  {isCollapsed && !isMobile && (
-                    <TooltipContent side="right">
-                      <p>{item.name}</p>
-                    </TooltipContent>
                   )}
-                </Tooltip>
+                  {(openGroups.has(group.title) || isCollapsed) &&
+                    group.items.map((item) => (
+                      <Tooltip key={item.name} delayDuration={0}>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant={
+                              isActivePath(item.path) ? "secondary" : "ghost"
+                            }
+                            className={cn(
+                              "w-full justify-start h-10 rounded-md px-3",
+                              "transition-all duration-200 hover:scale-[0.98]",
+                              isCollapsed && !isMobile && "justify-center"
+                            )}
+                            onClick={() => {
+                              router.push(item.path);
+                              isMobile && setIsMobileMenuOpen(false);
+                            }}
+                          >
+                            <item.icon className="h-4 w-4 shrink-0" />
+                            {(!isCollapsed || isMobile) && (
+                              <span className="ml-3 truncate text-sm">
+                                {item.name}
+                              </span>
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        {isCollapsed && !isMobile && (
+                          <TooltipContent side="right">
+                            <p>{item.name}</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    ))}
+                </div>
               ))}
             </div>
 
-            <div className="border-t">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+            <div className="border-t px-2 py-3 space-y-1">
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="w-full h-12 rounded-none justify-start"
+                    className="w-full justify-start h-10 rounded-md px-3"
+                    onClick={() => router.push("/settings")}
                   >
-                    <Settings className="h-5 w-5 shrink-0" />
+                    <Settings className="h-4 w-4" />
                     {(!isCollapsed || isMobile) && (
-                      <span className="ml-4 truncate">Settings</span>
+                      <span className="ml-3 truncate">Settings</span>
                     )}
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="start"
-                  className="min-w-[200px] dark:border-gray-800"
-                >
-                  <DropdownMenuItem
-                    onSelect={() => router.push("/profile")}
-                    className="cursor-pointer"
-                  >
-                    Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => router.push("/settings")}
-                    className="cursor-pointer"
-                  >
-                    Settings
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                </TooltipTrigger>
+                {isCollapsed && !isMobile && (
+                  <TooltipContent side="right">
+                    <p>Settings</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
 
               <Button
                 variant="ghost"
-                className="w-full h-12 rounded-none justify-start text-red-600 hover:bg-red-100/50 dark:text-red-400 dark:hover:bg-red-900/20"
+                className="w-full justify-start h-10 rounded-md px-3 text-red-500 hover:bg-red-500/10"
                 onClick={handleLogout}
               >
-                <LogOut className="h-5 w-5 shrink-0" />
+                <LogOut className="h-4 w-4" />
                 {(!isCollapsed || isMobile) && (
-                  <span className="ml-4 truncate">Logout</span>
+                  <span className="ml-3 truncate">Logout</span>
                 )}
               </Button>
             </div>
@@ -224,42 +325,52 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             isMobile ? "ml-0" : isCollapsed ? "ml-16" : "ml-64"
           )}
         >
-          <header className="h-16 border-b flex items-center justify-end px-4 gap-4 bg-background">
+          <header className="h-16 border-b flex items-center justify-end px-4 gap-4 bg-background/95 backdrop-blur-lg">
             <ThemeToggle />
             {user && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="gap-2 hover:bg-accent/50">
-                    <User className="h-5 w-5" />
-                    <span className="hidden sm:inline truncate max-w-[160px]">
-                      {user.email}
-                    </span>
+                  <Button
+                    variant="ghost"
+                    className="gap-2 hover:bg-accent/50 pr-3 pl-1.5"
+                  >
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white">
+                      {user.email[0].toUpperCase()}
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <span className="text-sm font-medium truncate max-w-[160px]">
+                        {user.email}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        Premium
+                      </span>
+                    </div>
                     <ChevronDown className="h-4 w-4 opacity-50" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"
-                  className="min-w-[200px] dark:border-gray-800"
+                  className="min-w-[200px] border bg-background/95 backdrop-blur-lg"
                 >
                   <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">
                     {user.email}
                   </div>
-                  <DropdownMenuSeparator className="dark:bg-gray-800" />
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onSelect={() => router.push("/profile")}
-                    className="cursor-pointer"
+                    className="cursor-pointer focus:bg-accent/50"
                   >
                     Profile
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onSelect={() => router.push("/settings")}
-                    className="cursor-pointer"
+                    className="cursor-pointer focus:bg-accent/50"
                   >
                     Settings
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator className="dark:bg-gray-800" />
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    className="cursor-pointer text-red-600 focus:bg-red-100/50 dark:text-red-400 dark:focus:bg-red-900/20"
+                    className="cursor-pointer text-red-500 focus:bg-red-500/10"
                     onSelect={handleLogout}
                   >
                     Logout
@@ -285,13 +396,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 // components/ErrorFallback.tsx
 function ErrorFallback() {
   return (
-    <div className="p-6 bg-destructive/10 rounded-lg border border-destructive/30">
-      <h2 className="text-xl font-semibold text-destructive">
-        Something went wrong!
-      </h2>
-      <p className="mt-2 text-destructive/80">
-        Please refresh the page or try again later.
-      </p>
+    <div className="p-6 bg-destructive/10 rounded-lg border border-destructive/30 backdrop-blur-lg">
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-full bg-destructive/20 flex items-center justify-center">
+          <Siren className="h-5 w-5 text-destructive" />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold text-destructive">
+            Oops! Error Occurred
+          </h2>
+          <p className="mt-1 text-sm text-destructive/80">
+            Please refresh the page or try again later.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

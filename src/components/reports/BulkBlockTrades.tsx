@@ -45,7 +45,7 @@ interface Trade {
 
 const BulkBlockTrades = () => {
   const [tradeType, setTradeType] = useState<"bulk" | "block">("bulk");
-  const [timeFrame, setTimeFrame] = useState("today");
+  const [timeFrame, setTimeFrame] = useState("oneWeek");
   const [trades, setTrades] = useState<TradeData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
