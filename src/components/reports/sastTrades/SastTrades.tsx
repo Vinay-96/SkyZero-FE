@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ChevronDown, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiService } from "@/lib/api/services/api.service";
+import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 
 interface Transaction {
   acquirerName: string;

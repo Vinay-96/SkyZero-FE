@@ -21,7 +21,7 @@ export const TimeFrameSelector = ({
   className,
 }: TimeFrameSelectorProps) => {
   return (
-    <div className={cn("flex gap-1 p-1 bg-muted rounded-lg", className)}>
+    <div className={cn("flex gap-1 p-1 bg-muted rounded-lg shadow-sm", className)}>
       {timeFrames.map((frame) => (
         <Button
           key={frame.value}

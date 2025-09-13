@@ -2,8 +2,8 @@ import api from "../config";
 import { API_ENDPOINTS } from "../endpoints";
 import type {
   User,
-  // LoginCredentials,
-  // RegisterData
+  LoginCredentials,
+  RegisterData
 } from "../../../types";
 import { useAuthStore } from "@/lib/zustand/store";
 

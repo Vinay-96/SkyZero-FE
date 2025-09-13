@@ -195,6 +195,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           className={cn(
             "fixed h-full bg-background/95 border-r shadow-sm z-40 backdrop-blur-lg",
             "transition-[transform,width] duration-300 ease-in-out",
+            "border-border/50",
             isMobile
               ? `w-64 ${
                   isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
@@ -325,7 +326,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             isMobile ? "ml-0" : isCollapsed ? "ml-16" : "ml-64"
           )}
         >
-          <header className="h-16 border-b flex items-center justify-end px-4 gap-4 bg-background/95 backdrop-blur-lg">
+          <header className="h-16 border-b flex items-center justify-end px-4 gap-4 bg-background/95 backdrop-blur-lg border-border/50 sticky top-0 z-30">
             <ThemeToggle />
             {user && (
               <DropdownMenu>
@@ -380,7 +381,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             )}
           </header>
 
-          <main className="p-4 sm:p-6 lg:p-8">
+          <main className="p-4 sm:p-6 lg:p-8 min-h-screen">
             <div className="max-w-7xl mx-auto">
               <ErrorBoundary fallback={<ErrorFallback />}>
                 {children}

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useToast } from "@/./hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiService } from "@/lib/api/services/api.service";
 import OptionsDashboard from "@/components/options/OptionDashboard";
