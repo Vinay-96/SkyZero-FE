@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const timeFrames = [
-  { value: "recent", label: "Recent" },
   { value: "today", label: "Today" },
   { value: "oneWeek", label: "One Week" },
   { value: "oneMonth", label: "One Month" },
@@ -21,7 +20,7 @@ export const TimeFrameSelector = ({
   className,
 }: TimeFrameSelectorProps) => {
   return (
-    <div className={cn("flex gap-1 p-1 bg-muted rounded-lg", className)}>
+    <div className={cn("flex gap-1 p-1 bg-muted rounded-lg shadow-sm", className)}>
       {timeFrames.map((frame) => (
         <Button
           key={frame.value}

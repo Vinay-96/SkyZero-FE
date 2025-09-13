@@ -1,16 +1,9 @@
-import { useEffect } from "react";
-import { useThemeStore } from "@/lib/zustand/theme.store";
+"use client";
 
-export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const { isDarkMode } = useThemeStore();
+import * as React from "react";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { type ThemeProviderProps } from "next-themes/dist/types";
 
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [isDarkMode]);
-
-  return <>{children}</>;
-};
+export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
+  return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
+}

@@ -10,7 +10,12 @@ import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
       <ErrorBoundary fallback={<ErrorFallback />}>
         <Suspense fallback={<LoadingSkeleton />}>
           <Layout>

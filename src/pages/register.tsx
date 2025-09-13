@@ -13,10 +13,11 @@ export default function RegisterPage() {
     >
       <div
         className={cn(
-          "max-w-md w-full space-y-6",
+          "max-w-2xl w-full space-y-6",
           "bg-card/90 backdrop-blur-lg",
           "p-8 rounded-2xl shadow-xl",
-          "border border-border/50"
+          "border border-border/50",
+          "animate-in fade-in-0 slide-in-from-bottom-4 duration-500"
         )}
       >
         <div className="space-y-2 text-center">
