@@ -6,10 +6,8 @@ import { useRouter } from "next/router";
 import {
   ChevronLeft,
   ChevronRight,
-  Home,
   Settings,
   LogOut,
-  User,
   Zap,
   Siren,
   ChartCandlestick,
@@ -17,8 +15,7 @@ import {
   Blocks,
   UserSearch,
   ArrowRightLeft,
-  Folder,
-  FolderOpen,
+  Activity
 } from "lucide-react";
 import {
   Tooltip,
@@ -110,14 +107,15 @@ const menuGroups: MenuGroup[] = [
       },
     ],
   },
-  {
-    title: "Options",
-    items: [
-      { name: "Option Flash", icon: Zap, path: "/options/option-deeplytics" },
-      { name: "Signals", icon: Siren, path: "/options/option-contrarian" },
-      { name: "Option Overview", icon: Siren, path: "/options/options-dashboard" },
-    ],
-  },
+  // comment due to high risk
+  // {
+  //   title: "Options",
+  //   items: [
+  //     { name: "Option Flash", icon: Zap, path: "/options/option-deeplytics" },
+  //     { name: "Signals", icon: Siren, path: "/options/option-contrarian" },
+  //     { name: "Option Overview", icon: Siren, path: "/options/options-dashboard" },
+  //   ],
+  // },
   {
     title: "Technicals",
     items: [
@@ -128,7 +126,7 @@ const menuGroups: MenuGroup[] = [
       },
       {
         name: "Health",
-        icon: ChartCandlestick,
+        icon: Activity,
         path: "/health",
       },
     ],

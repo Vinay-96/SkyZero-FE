@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const timeFrames = [
-  { value: "recent", label: "Recent" },
   { value: "today", label: "Today" },
   { value: "oneWeek", label: "One Week" },
   { value: "oneMonth", label: "One Month" },
