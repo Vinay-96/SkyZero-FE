@@ -1,4 +1,3 @@
-// components/Layout.tsx
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/zustand/store";
 import { socketService } from "@/lib/socket";
@@ -10,12 +9,11 @@ import {
   LogOut,
   Zap,
   Siren,
-  ChartCandlestick,
-  ChevronDown,
   Blocks,
   UserSearch,
   ArrowRightLeft,
-  Activity
+  Activity,
+  ChevronDown,
 } from "lucide-react";
 import {
   Tooltip,
@@ -35,6 +33,7 @@ import { useEffect, useState } from "react";
 import { ThemeToggle } from "./ThemeToggle";
 import { ErrorBoundary } from "./ErrorBoundary";
 
+// Types
 type MenuGroup = {
   title: string;
   items: {
@@ -42,8 +41,10 @@ type MenuGroup = {
     icon: any;
     path: string;
   }[];
+  single?: boolean;
 };
 
+// Menu Config
 const menuGroups: MenuGroup[] = [
   {
     title: "Bulk Block Trades",
@@ -107,40 +108,29 @@ const menuGroups: MenuGroup[] = [
       },
     ],
   },
-  // comment due to high risk
   {
     title: "Options",
     items: [
       { name: "Option Flash", icon: Zap, path: "/options/option-deeplytics" },
       { name: "Signals", icon: Siren, path: "/options/option-contrarian" },
-      { name: "Option Overview", icon: Siren, path: "/options/options-dashboard" },
+      {
+        name: "Option Overview",
+        icon: Siren,
+        path: "/options/options-dashboard",
+      },
     ],
   },
   {
-    title: "Bhavcopy",
+    title: "Corporate Action",
+    single: true,
     items: [
       { name: "Croporate Action", icon: Zap, path: "/bhavcopy/crop-action" },
-      { name: "Price Band Hit", icon: Siren, path: "/bhavcopy/priceband-hit" },
-      { name: "Gainers Losers", icon: Siren, path: "/bhavcopy/gainers-losers" },
-      { name: "New High Low", icon: Siren, path: "/bhavcopy/new-high-low" },
-      { name: "Top 25 Trades Losers", icon: Siren, path: "/bhavcopy/top-25-trades" },
-      { name: "SME Trades", icon: Siren, path: "/bhavcopy/sme-trades" },
     ],
   },
   {
     title: "Technicals",
-    items: [
-      {
-        name: "Dashboard",
-        icon: ChartCandlestick,
-        path: "/candles/technical-dashboard",
-      },
-      {
-        name: "Health",
-        icon: Activity,
-        path: "/health",
-      },
-    ],
+    single: true,
+    items: [{ name: "Health", icon: Activity, path: "/health" }],
   },
 ];
 
@@ -238,25 +228,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             )}
           </div>
 
+          {/* Sidebar Menu */}
           <nav className="mt-4 flex flex-col h-[calc(100%-4rem)] justify-between overflow-y-auto">
             <div className="space-y-1 px-2">
               {menuGroups.map((group) => (
                 <div key={group.title}>
-                  {(!isCollapsed || isMobile) && (
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-between h-10 px-3 font-medium text-sm"
-                      onClick={() => toggleGroup(group.title)}
-                    >
-                      <span className="truncate">{group.title}</span>
-                      {openGroups.has(group.title) ? (
-                        <ChevronLeft className="h-4 w-4 ml-2 rotate-90" />
-                      ) : (
-                        <ChevronLeft className="h-4 w-4 ml-2 -rotate-90" />
-                      )}
-                    </Button>
-                  )}
-                  {(openGroups.has(group.title) || isCollapsed) &&
+                  {group.single ? (
                     group.items.map((item) => (
                       <Tooltip key={item.name} delayDuration={0}>
                         <TooltipTrigger asChild>
@@ -288,11 +265,65 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                           </TooltipContent>
                         )}
                       </Tooltip>
-                    ))}
+                    ))
+                  ) : (
+                    <>
+                      {(!isCollapsed || isMobile) && (
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-between h-10 px-3 font-medium text-sm"
+                          onClick={() => toggleGroup(group.title)}
+                        >
+                          <span className="truncate">{group.title}</span>
+                          {openGroups.has(group.title) ? (
+                            <ChevronLeft className="h-4 w-4 ml-2 rotate-90" />
+                          ) : (
+                            <ChevronLeft className="h-4 w-4 ml-2 -rotate-90" />
+                          )}
+                        </Button>
+                      )}
+                      {(openGroups.has(group.title) || isCollapsed) &&
+                        group.items.map((item) => (
+                          <Tooltip key={item.name} delayDuration={0}>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant={
+                                  isActivePath(item.path)
+                                    ? "secondary"
+                                    : "ghost"
+                                }
+                                className={cn(
+                                  "w-full justify-start h-10 rounded-md px-3",
+                                  "transition-all duration-200 hover:scale-[0.98]",
+                                  isCollapsed && !isMobile && "justify-center"
+                                )}
+                                onClick={() => {
+                                  router.push(item.path);
+                                  isMobile && setIsMobileMenuOpen(false);
+                                }}
+                              >
+                                <item.icon className="h-4 w-4 shrink-0" />
+                                {(!isCollapsed || isMobile) && (
+                                  <span className="ml-3 truncate text-sm">
+                                    {item.name}
+                                  </span>
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            {isCollapsed && !isMobile && (
+                              <TooltipContent side="right">
+                                <p>{item.name}</p>
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
+                        ))}
+                    </>
+                  )}
                 </div>
               ))}
             </div>
 
+            {/* Settings + Logout */}
             <div className="border-t px-2 py-3 space-y-1">
               <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
@@ -403,7 +434,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-// components/ErrorFallback.tsx
+// Error Fallback Component
 function ErrorFallback() {
   return (
     <div className="p-6 bg-destructive/10 rounded-lg border border-destructive/30 backdrop-blur-lg">
