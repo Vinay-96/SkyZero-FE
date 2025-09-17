@@ -255,5 +255,75 @@ export const apiService = {
       return response.data;
     },
   },
+
+  // Bhavcopy
+  bhavcopy:{
+    getCropAction: async () => {
+      const response = await api.get(
+        `${API_ENDPOINTS.BHAVCOPY.CORP_ACTION}`,
+        {
+          headers: {
+            Authorization: `Bearer ${useAuthStore.getState().token}`,
+          },
+        }
+      );
+      return response.data;
+    },
+    getPriceBandHit: async () => {
+      const response = await api.get(
+        `${API_ENDPOINTS.BHAVCOPY.PRICE_HIT}`,
+        {
+          headers: {
+            Authorization: `Bearer ${useAuthStore.getState().token}`,
+          },
+        }
+      );
+      return response.data;
+    },
+    getGainersLosers: async () => {
+      const response = await api.get(
+        `${API_ENDPOINTS.BHAVCOPY.GAINERS_AND_LOSERS}`,
+        {
+          headers: {
+            Authorization: `Bearer ${useAuthStore.getState().token}`,
+          },
+        }
+      );
+      return response.data;
+    },
+    getNewHighLow: async () => {
+      const response = await api.get(
+        `${API_ENDPOINTS.BHAVCOPY.NEW_HIGH_LOW}`,
+        {
+          headers: {
+            Authorization: `Bearer ${useAuthStore.getState().token}`,
+          },
+        }
+      );
+      return response.data;
+    },
+    getTop25Trades: async () => {
+      const response = await api.get(
+        `${API_ENDPOINTS.BHAVCOPY.TOP_25_TRADES}`,
+        {
+          headers: {
+            Authorization: `Bearer ${useAuthStore.getState().token}`,
+          },
+        }
+      );
+      return response.data;
+    },
+    getSmeTrades: async () => {
+      const response = await api.get(
+        `${API_ENDPOINTS.BHAVCOPY.SME_TRADES}`,
+        {
+          headers: {
+            Authorization: `Bearer ${useAuthStore.getState().token}`,
+          },
+        }
+      );
+      return response.data;
+    },
+  }
 };
 

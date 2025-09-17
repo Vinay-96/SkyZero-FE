@@ -108,14 +108,25 @@ const menuGroups: MenuGroup[] = [
     ],
   },
   // comment due to high risk
-  // {
-  //   title: "Options",
-  //   items: [
-  //     { name: "Option Flash", icon: Zap, path: "/options/option-deeplytics" },
-  //     { name: "Signals", icon: Siren, path: "/options/option-contrarian" },
-  //     { name: "Option Overview", icon: Siren, path: "/options/options-dashboard" },
-  //   ],
-  // },
+  {
+    title: "Options",
+    items: [
+      { name: "Option Flash", icon: Zap, path: "/options/option-deeplytics" },
+      { name: "Signals", icon: Siren, path: "/options/option-contrarian" },
+      { name: "Option Overview", icon: Siren, path: "/options/options-dashboard" },
+    ],
+  },
+  {
+    title: "Bhavcopy",
+    items: [
+      { name: "Croporate Action", icon: Zap, path: "/bhavcopy/crop-action" },
+      { name: "Price Band Hit", icon: Siren, path: "/bhavcopy/priceband-hit" },
+      { name: "Gainers Losers", icon: Siren, path: "/bhavcopy/gainers-losers" },
+      { name: "New High Low", icon: Siren, path: "/bhavcopy/new-high-low" },
+      { name: "Top 25 Trades Losers", icon: Siren, path: "/bhavcopy/top-25-trades" },
+      { name: "SME Trades", icon: Siren, path: "/bhavcopy/sme-trades" },
+    ],
+  },
   {
     title: "Technicals",
     items: [
