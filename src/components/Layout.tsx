@@ -108,18 +108,18 @@ const menuGroups: MenuGroup[] = [
       },
     ],
   },
-  {
-    title: "Options",
-    items: [
-      { name: "Option Flash", icon: Zap, path: "/options/option-deeplytics" },
-      { name: "Signals", icon: Siren, path: "/options/option-contrarian" },
-      {
-        name: "Option Overview",
-        icon: Siren,
-        path: "/options/options-dashboard",
-      },
-    ],
-  },
+  // {
+  //   title: "Options",
+  //   items: [
+  //     { name: "Option Flash", icon: Zap, path: "/options/option-deeplytics" },
+  //     { name: "Signals", icon: Siren, path: "/options/option-contrarian" },
+  //     {
+  //       name: "Option Overview",
+  //       icon: Siren,
+  //       path: "/options/options-dashboard",
+  //     },
+  //   ],
+  // },
   {
     title: "Corporate Action",
     single: true,
